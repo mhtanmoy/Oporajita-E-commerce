@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-p2&q^f%4wf)2r1rzzdgjzhl9y!=-)_n@3_=4#fzx@p&4s$&h^)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['oporajita.herokuapp.com', '127.0.0.1']
 
 
 # Application definition
@@ -103,6 +103,8 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
