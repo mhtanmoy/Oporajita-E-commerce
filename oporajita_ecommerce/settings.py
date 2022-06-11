@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-p2&q^f%4wf)2r1rzzdgjzhl9y!=-)_n@3_=4#fzx@p&4s$&h^)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['oporajita.herokuapp.com', '127.0.0.1']
+ALLOWED_HOSTS = ['oporajita1.herokuapp.com', '127.0.0.1']
 
 
 # Application definition
@@ -194,9 +194,11 @@ AUTH_USER_MODEL = 'user_auth.User'
 STATIC_URL = '/static/'
 
 STATIC_ROOT=os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS=[
-    BASE_DIR / 'static'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
 ]
+
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
