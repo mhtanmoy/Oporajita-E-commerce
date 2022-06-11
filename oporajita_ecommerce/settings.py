@@ -138,13 +138,15 @@ WSGI_APPLICATION = 'oporajita_ecommerce.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'opdb',
-        'USER': 'postgres',
-        'PASSWORD': '1234',
-        'HOST': '127.0.0.1',
+        'NAME': 'd1a53cjndrpjjm',
+        'USER': 'pskamgptbcgnjr',
+        'PASSWORD': '96a9b5a74141b9237b08741d080d94abb2f0781c5f5874a4986db27b506ceccf',
+        'HOST': 'ec2-34-198-186-145.compute-1.amazonaws.com',
         'PORT': '5432',
     }
 }
