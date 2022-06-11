@@ -191,13 +191,12 @@ USE_TZ = True
 AUTH_USER_MODEL = 'user_auth.User'
 
 
-STATIC_URL = '/static/'
+
 
 STATIC_ROOT=os.path.join(BASE_DIR, 'staticfiles')
 
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+
+STATIC_URL = '/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
