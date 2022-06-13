@@ -137,23 +137,23 @@ WSGI_APPLICATION = 'oporajita_ecommerce.wsgi.application'
 
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'd2hp3b1fcpttc4',
-#         'USER': 'phrofhfkpuzmcw',
-#         'PASSWORD': 'a7f84253d743d27c51347b1c4cc9d8c4292783561f932744366306a0f8eceb3b',
-#         'HOST': 'ec2-54-165-178-178.compute-1.amazonaws.com',
-#         'PORT': '5432',
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'd2hp3b1fcpttc4',
+        'USER': 'phrofhfkpuzmcw',
+        'PASSWORD': 'a7f84253d743d27c51347b1c4cc9d8c4292783561f932744366306a0f8eceb3b',
+        'HOST': 'ec2-54-165-178-178.compute-1.amazonaws.com',
+        'PORT': '5432',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
