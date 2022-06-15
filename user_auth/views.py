@@ -12,7 +12,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import generics, status
-import jwt,datetime
+import jwt
+import datetime
 
 from customer_profile_api.serializers import CustomerProfileSerializer
 
@@ -21,8 +22,10 @@ from .models import User
 
 # Create your views here.
 
+
 class LoginView(APIView):
     permission_classes = (AllowAny,)
+
     def post(self, request):
         email = request.data['email']
         password = request.data['password']
@@ -31,7 +34,10 @@ class LoginView(APIView):
             raise AuthenticationFailed('User not found!')
         if not user.check_password(password):
             raise AuthenticationFailed('Incorrect password!')
-        name = user.first_name + ' ' + user.last_name
+        if user.first_name is None or user.last_name is None:
+            name = user.username
+        else:
+            name = user.first_name + ' ' + user.last_name
         username = user.username
         id = user.id
         refresh_token = RefreshToken.for_user(user)
@@ -47,18 +53,19 @@ class LoginView(APIView):
             'status': 'success'
         }
         return response
-        
 
 
 class UserView(APIView):
     authentication_classes = (JWTAuthentication,)
     permission_classes = (IsAuthenticated,)
+
     def get(self, request):
         user = self.request.user
-        user = User.objects.get(email = user.email)
+        user = User.objects.get(email=user.email)
         print(user)
         # serializer = UserInfoSerializer(user)
-        message = "Welcome, "+user.first_name+" "+user.last_name+"! You have done a successfull login."
+        message = "Welcome, "+user.first_name+" " + \
+            user.last_name+"! You have done a successfull login."
         return Response({
             'message': message
         })
@@ -67,6 +74,7 @@ class UserView(APIView):
 class UserInfoUpdateView(APIView):
     authentication_classes = (JWTAuthentication,)
     permission_classes = (IsAuthenticated,)
+
     def get(self, request, pk):
         user = User.objects.get(pk=pk)
         response = Response()
@@ -80,6 +88,7 @@ class UserInfoUpdateView(APIView):
             'address': user.address,
         }
         return response
+
     def put(self, request, pk):
         user = User.objects.get(pk=pk)
         if user is None:
@@ -102,13 +111,12 @@ class UserInfoUpdateView(APIView):
             'phone': user.phone,
             'address': user.address,
         })
-        
-
 
 
 class ChangePasswordView(APIView):
     authentication_classes = (JWTAuthentication,)
     permission_classes = (IsAuthenticated,)
+
     def put(self, request, pk):
         try:
             user = User.objects.get(pk=pk)
@@ -128,7 +136,7 @@ class ChangePasswordView(APIView):
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'email': user.email,
-            }) 
+            })
         except:
             raise exceptions.AuthenticationFailed('User not found!')
 
@@ -136,6 +144,7 @@ class ChangePasswordView(APIView):
 class LogoutView(APIView):
     authenticaiton_classes = (JWTAuthentication,)
     permission_classes = (IsAuthenticated,)
+
     def post(self, request):
         try:
             refresh_token = request.data['refresh_token']

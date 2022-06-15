@@ -1,29 +1,12 @@
-from dataclasses import dataclass
+import email
 from random import randint
-from cgi import print_directory
-from itertools import chain, product
-import json
-from multiprocessing import context
-from sys import api_version
-from time import time
-from unicodedata import decimal, name
-from urllib import response
 from django.db.models import Sum
-from django.contrib import messages
-from django.core.checks.messages import Error
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models.functions import Coalesce
-from django.dispatch import receiver
 # Create your views here.
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
-from pyparsing import null_debug_action
+from django.http import JsonResponse
 from rest_framework.response import Response
-from django.views import View
 from rest_framework import generics
 from rest_framework import status
-from rest_framework.authentication import BasicAuthentication
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import (
     IsAuthenticated
@@ -31,18 +14,21 @@ from rest_framework.permissions import (
 from rest_framework.views import APIView
 from customer_order_api.models import Order, OrderItem
 from customer_profile_api.models import CustomerProfile
-
+from settings_api.models import TaxRate
+from user_auth.permissions import HasPermission
 # from user_profile.serializers import (
 #     CustomerProfileSerializer, RestaurantOwnerProfileSerializer
 # )
-from user_auth.permissions import IsAdmin
 from .serializers import *
 import datetime
 # Create your views here.
 
+
 class DashboardView(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('view_store_dashboard'))
+
     def get(self, request, *args, **kwargs):
         today = datetime.datetime.now()
         print("today ", today)
@@ -53,6 +39,7 @@ class DashboardView(APIView):
         print("minute ", today.minute)
         print("second ", today.second)
         param = request.GET.get('param')
+        print("param ", param)
         if param == 'sales':
             #### Hourly Sales
             updated = Order.objects.filter(
@@ -76,9 +63,10 @@ class DashboardView(APIView):
             pm_list.sort(key=lambda x: x['name'])
 
             #### Total sales
-            total_sales = str(Order.objects.all().aggregate(Sum('order_total')).get('order_total__sum'))
+            total_sales = str(Order.objects.all().aggregate(
+                Sum('order_total')).get('order_total__sum'))
             print("total_sales ", total_sales)
-            
+
             context = {
                 'am': am_list,
                 'pm': pm_list,
@@ -119,7 +107,6 @@ class DashboardView(APIView):
             #     created__hour=today.hour-1
             # ).aggregate(Sum('order_total'))
 
-
             #### Last hour orders
             # last_hour_orders = Order.objects.filter(
             #     created__year=today.year,
@@ -147,7 +134,8 @@ class DashboardView(APIView):
             pm_list.sort(key=lambda x: x['name'])
 
             #### Total payments
-            total_payments = str(Order.objects.all().aggregate(Sum('paid')).get('paid__sum'))
+            total_payments = str(Order.objects.all().aggregate(
+                Sum('paid')).get('paid__sum'))
             print("total_payments ", total_payments)
             context = {
                 'am': am_list,
@@ -196,14 +184,13 @@ class DashboardView(APIView):
             #     last_hour_discounts = 0
             # else:
             #     last_hour_discounts = float(str(last_hour_sales.get('order_total__sum'))) - float(str(last_hour_payments.get('amount_paid__sum')))
-        
 
             #### total discounts
             # check=str(total_payments.get('amount_paid__sum'))
             # if check == 'None':
             #     total_discounts = 0
             # else:
-                # total_discounts = float(str(total_sales.get('order_total__sum'))) - float(str(total_payments.get('amount_paid__sum')))
+            # total_discounts = float(str(total_sales.get('order_total__sum'))) - float(str(total_payments.get('amount_paid__sum')))
             #### last hour visitors
             # ******* have to do *********
         elif param == 'customers':
@@ -372,7 +359,8 @@ class SupplierList(generics.ListCreateAPIView):
     """
     endpoint for creating product category for each vendor
     """
-    # permission_classes = (IsAdmin,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, HasPermission('manage_suppliers'))
     serializer_class = SupplierSerializer
     queryset = Supplier.objects.filter()
 
@@ -381,23 +369,20 @@ class SupplierList(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        # if self.request.user.is_admin:
-        if self.request.user:
-            try:
-                serializer.save()
-            except:
-                raise ValidationError(
-                    'Failed to add department')
-        else:
+        try:
+            serializer.save()
+        except:
             raise ValidationError(
-                'You do not have access to create department')
+                'Failed to add department')
 
 
 class SupplierDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     endpoint for retrieve update delete product category
     """
-    # permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, HasPermission('manage_suppliers'))
+
     serializer_class = SupplierSerializer
     queryset = Supplier.objects.all()
 
@@ -406,7 +391,9 @@ class ProductCategoryList(generics.ListCreateAPIView):
     """
     endpoint for creating product category for each vendor
     """
-    # permission_classes = (IsAdmin,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('create_edit_products'))
     serializer_class = ProductCategorySerializer
     queryset = ProductCategory.objects.filter()
 
@@ -429,11 +416,24 @@ class ProductCategoryList(generics.ListCreateAPIView):
                 'You do not have access to create categories')
 
 
-class ProductCategoryDetail(generics.RetrieveUpdateDestroyAPIView):
+class ProductCategoryDetail(generics.RetrieveUpdateAPIView):
     """
     endpoint for retrieve update product category
     """
-    # permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('create_edit_products'))
+    serializer_class = ProductCategorySerializer
+    queryset = ProductCategory.objects.all()
+
+
+class ProductCategoryDelete(generics.DestroyAPIView):
+    """
+    endpoint for retrieve update product category
+    """
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('delete_products'))
     serializer_class = ProductCategorySerializer
     queryset = ProductCategory.objects.all()
 
@@ -442,7 +442,9 @@ class BrandList(generics.ListCreateAPIView):
     """
     endpoint for creating product category for each vendor
     """
-    # permission_classes = (IsAdmin,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('create_edit_products'))
     serializer_class = BrandSerializer
     queryset = Brand.objects.filter()
 
@@ -464,21 +466,35 @@ class BrandList(generics.ListCreateAPIView):
                 'You do not have access to create Brand')
 
 
-class BrandDetail(generics.RetrieveUpdateDestroyAPIView):
+class BrandDetail(generics.RetrieveUpdateAPIView):
     """
-    endpoint for retrieve update product category
+    endpoint for retrieve update product brand
     """
-    # permission_classes = (IsAuthenticated, )
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('create_edit_products'))
     serializer_class = BrandSerializer
-    queryset = Brand.objects.filter()
+    queryset = Brand.objects.all()
+
+
+class BrandDelete(generics.DestroyAPIView):
+    """
+    endpoint for delete update product brand
+    """
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('delete_products'))
+    serializer_class = BrandSerializer
+    queryset = Brand.objects.all()
 
 
 class ProductList(generics.ListAPIView):
     """
     endpoint for creating product category
     """
-    authentication_classes = (JWTAuthentication,IsAdmin,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('create_edit_products'))
     serializer_class = ProductSerializer
     queryset = Product.objects.filter(is_active=True)
 
@@ -498,69 +514,42 @@ class ProductList(generics.ListAPIView):
         return queryset
 
 
-
 class ProductCreate(APIView):
     """
     endpoint for creating product category
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('create_edit_products'))
     serializer_class = ProductSerializer
 
     def post(self, request, format=None):
-        user = self.request.user
-        if user.is_admin:
-            serializer = ProductSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                product_obj = Product.objects.latest('id')
-                return Response(ProductSerializer(product_obj).data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(
-                'You do not have access to create product', status=status.HTTP_403_FORBIDDEN
-            )
-
-# class ProductCreate(generics.CreateAPIView):
-#     """
-#     endpoint for creating product category
-#     """
-#     authentication_classes = (JWTAuthentication,)
-#     permission_classes = (IsAuthenticated,)
-#     serializer_class = ProductSerializer
-#     queryset = Product.objects.filter(is_active=True)
-
-#     def get_queryset(self):
-#         queryset = Product.objects.filter(is_active=True)
-#         return queryset
-
-#     def perform_create(self, serializer):
-#         if self.request.user:
-#             serializer = ProductSerializer(data=self.request.data)
-#             if serializer.is_valid():
-#                 print("serializer valid and this is in if condition")
-#                 serializer.save()
-#                 product_obj = Product.objects.last()
-#                 return Response(
-#                     {
-#                         'status': 'success',
-#                         'message': 'Product added successfully',
-#                         'data': ProductSerializer(product_obj).data
-#                     },
-#                     status=status.HTTP_201_CREATED)
-#             else:
-#                 print("Failed to add product")
-#         else:
-#             raise ValidationError(
-#                 'You do not have access to create Brand')
+        serializer = ProductSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            product_obj = Product.objects.latest('id')
+            return Response(ProductSerializer(product_obj).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
+class ProductDetail(generics.RetrieveUpdateAPIView):
     """
     endpoint for retrieve update product category
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('create_edit_products'))
+    serializer_class = ProductSerializer
+    queryset = Product.objects.filter(is_active=True)
+
+
+class ProductDelete(generics.DestroyAPIView):
+    """
+    endpoint for delete product category
+    """
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('delete_products'))
     serializer_class = ProductSerializer
     queryset = Product.objects.filter(is_active=True)
 
@@ -570,7 +559,8 @@ class ProductSizeVariatList(generics.ListCreateAPIView):
     endpoint for creating product category for product size
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('create_edit_products'))
     serializer_class = ProductSizeVariantSerializer
     queryset = ProductSizeVariant.objects.filter()
 
@@ -583,6 +573,7 @@ class ProductSizeVariatList(generics.ListCreateAPIView):
         # if self.request.user.is_admin:
         if self.request.user:
             value = self.request.data.get('value').split(',')
+            product = Product.objects.get(id=self.kwargs['product_id'])
             print(value)
             for i in value:
                 print(i)
@@ -590,61 +581,52 @@ class ProductSizeVariatList(generics.ListCreateAPIView):
                 if serializer.is_valid():
                     print("serializer valid and this is in if condition")
                     serializer.save(
-                        parent_id=self.kwargs['product_id'], product_id=self.kwargs['product_id'], value=i)
+                        parent_id=self.kwargs['product_id'],
+                        product_id=self.kwargs['product_id'],
+                        advance_price=product.advance_price,
+                        auto_adjust_selling_price=product.auto_adjust_selling_price,
+                        cost_price=product.cost_price,
+                        compare_at_price=product.compare_at_price,
+                        price=product.price,
+                        value=i,
+                    )
                 else:
                     print("Failed to add product size")
-            product = Product.objects.get(id=self.kwargs['product_id'])
-            # product.variant.set(ProductSizeVariant.objects.filter(
-            #     parent_id=self.kwargs['product_id']))
-            # product.save()
             print(product)
         else:
             raise ValidationError(
                 'You do not have access to create product size variant')
 
-            # serializer = ProductSizeVariantSerializer(data=request.data)
-            # if serializer.is_valid():
-            #     print(serializer.is_valid())
-            #     print(self.kwargs['product_id'])
-            #     serializer.save()
-            #     print(serializer.errors)
-            #     print (serializer)
-            #     print(serializer.data)
-            #     product_id = self.kwargs['product_id']
-            #     print(product_id)
-            #     product_obj = ProductSizeVariant.objects.last()
-            #     print(product_obj)
-            #     product_obj.product_id = product_id
-            #     product_obj.parent_id = product_id
-            #     product_obj.save()
-            #     product = Product.objects.get(id=product_id)
-            #     product.variant_id = product_obj.id
-            #     product.save()
-            #     print(product_obj)
-            # else:
-            #     raise ValidationError(
-            #         'Failed to add size')
 
-        # else:
-        #     raise ValidationError(
-        #         'You do not have access to create size')
-
-
-class ProductSizeVariantDetail(generics.RetrieveUpdateDestroyAPIView):
+class ProductSizeVariantDetail(generics.RetrieveUpdateAPIView):
     """
     endpoint for retrieve update product size
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('create_edit_products'))
     serializer_class = ProductSizeVariantSerializer
     queryset = ProductSizeVariant.objects.filter()
+
+
+class ProductSizeVariantDelete(generics.DestroyAPIView):
+    """
+    endpoint for delete product size
+    """
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('delete_products'))
+    serializer_class = ProductSizeVariantSerializer
+    queryset = ProductSizeVariant.objects.filter()
+
 
 class ProductInventoryListDetail(APIView):
     """
     endpoint for creating product category for product Inventory
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('update_inventory'))
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
 
@@ -652,21 +634,21 @@ class ProductInventoryListDetail(APIView):
         product_obj = Product.objects.all()
         product_size_variant = ProductSizeVariant.objects.all()
         serializer = ProductSerializer(product_obj, many=True)
-        serializer_size_variant = ProductSizeVariantSerializer(
-            product_size_variant, many=True)
-        return Response({'product': serializer.data, 'product_size_variant': serializer_size_variant.data})
+        return Response({'product': serializer.data})
 
-    def post(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         add_new = int(request.data.get('quantity'))
         product_id = request.data.get('product_id')
         product_obj = Product.objects.get(id=product_id)
-        if request.data.get('variant_id') is not None:
+        try:
             variant_id = request.data.get('variant_id')
+        except:
+            variant_id = None
         if variant_id is not None:
             variant_obj = ProductSizeVariant.objects.get(id=variant_id)
             all_variant_with_product = ProductSizeVariant.objects.filter(
                 product_id=product_id)
-            check_on_hand = available = stock = committed =0
+            check_on_hand = available = stock = committed = 0
             for i in all_variant_with_product:
                 if i.id == variant_id:
                     if i.on_hand is None:
@@ -675,23 +657,17 @@ class ProductInventoryListDetail(APIView):
                         i.available = 0
                     if i.stock is None:
                         i.stock = 0
-                    if i.committed is None:
-                        i.committed = 0
                     check_on_hand = check_on_hand + int(i.on_hand)
                     available = available + int(i.available)
                     stock = stock + int(i.stock)
-                    committed = committed + int(i.committed)
             if check_on_hand == 0 and available == 0:
                 product_obj.on_hand = 0
                 product_obj.available = 0
-                product_obj.committed = 0
                 product_obj.save()
             print(type(variant_obj.stock))
             print(type(add_new))
             if variant_obj.stock is None:
                 variant_obj.stock = 0
-            if variant_obj.committed is None:
-                variant_obj.committed = 0
             if variant_obj.on_hand is None:
                 variant_obj.on_hand = 0
             if variant_obj.available is None:
@@ -700,7 +676,6 @@ class ProductInventoryListDetail(APIView):
             variant_obj.stock = int(variant_obj.stock) + add_new
             variant_obj.on_hand = variant_obj.on_hand + add_new
             variant_obj.available = variant_obj.available + add_new
-            variant_obj.committed = 0
             variant_obj.save()
             stock = available = on_hand = 0
             for i in all_variant_with_product:
@@ -719,29 +694,20 @@ class ProductInventoryListDetail(APIView):
             product_obj.available = product_obj.available + add_new
             product_obj.save()
         serializer = ProductSerializer(Product.objects.all(), many=True)
-        serializer_size_variant = ProductSizeVariantSerializer(
-            ProductSizeVariant.objects.all(), many=True)
-        return Response({'product': serializer.data, 'product_size_variant': serializer_size_variant.data})
-        
 
+        return Response({'product': serializer.data})
 
-
-# class ProductWarrantyUpdate(generics.RetrieveUpdateDestroyAPIView):
-#     """
-#     endpoint for retrieve update product category
-#     """
-#     permission_classes = (IsAuthenticated, IsAdmin,)
-#     serializer_class = WarrantySerializer
-#     queryset = ProductWarranty.objects.all()
 
 class BulkInventoryEntryUpdate(APIView):
     """
     endpoint for bulk inventory entry update
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('update_inventory'))
     serializer_class = BulkInventoryEntrySerializer
     queryset = ProductSizeVariant.objects.all()
+
     def get(self, request, *args, **kwargs):
         product_obj = Product.objects.all()
         product_size_variant = ProductSizeVariant.objects.all()
@@ -761,13 +727,24 @@ class BulkInventoryEntryUpdate(APIView):
             elif i.get('variant_id') is not None:
                 variant_id = i.get('variant_id')
                 quantity = i.get('add_new')
+                if quantity is None:
+                    quantity = 0
                 variant_obj = ProductSizeVariant.objects.get(id=variant_id)
-                check_on_hand = available = stock = committed =0
-                print("stock", variant_obj.stock, "on_hand", variant_obj.on_hand, "available", variant_obj.available, "committed", variant_obj.committed)
-                variant_obj.stock = variant_obj.stock + quantity
-                variant_obj.on_hand = variant_obj.on_hand + quantity
-                variant_obj.available = variant_obj.available + quantity
-                variant_obj.committed = variant_obj.committed + quantity
+                check_on_hand = available = stock = committed = 0
+                print("stock", variant_obj.stock, "on_hand", variant_obj.on_hand,
+                      "available", variant_obj.available, "committed", variant_obj.committed)
+                if variant_obj.stock is None:
+                    variant_obj.stock = 0
+                if variant_obj.committed is None:
+                    variant_obj.committed = 0
+                if variant_obj.on_hand is None:
+                    variant_obj.on_hand = 0
+                if variant_obj.available is None:
+                    variant_obj.available = 0
+                variant_obj.stock = variant_obj.stock + int(quantity)
+                variant_obj.on_hand = variant_obj.on_hand + int(quantity)
+                variant_obj.available = variant_obj.available + int(quantity)
+                variant_obj.committed = variant_obj.committed + int(quantity)
                 variant_obj.save()
                 print("stock", variant_obj.stock, "on_hand", variant_obj.on_hand,
                       "available", variant_obj.available, "committed", variant_obj.committed)
@@ -801,30 +778,48 @@ class BulkInventoryEntryUpdate(APIView):
             elif i.get('product_id') is not None:
                 product_id = i.get('product_id')
                 product_obj = Product.objects.get(id=product_id)
-                print("stock", product_obj.stock, "available", product_obj.available, "on_hand", product_obj.on_hand, "committed", product_obj.committed)
-                product_obj.stock = product_obj.stock + i.get('add_new')
-                product_obj.on_hand = product_obj.on_hand + i.get('add_new')
-                product_obj.available = product_obj.available + i.get('add_new')
-                product_obj.committed = product_obj.committed + i.get('add_new')
+                print("stock", product_obj.stock, "available", product_obj.available,
+                      "on_hand", product_obj.on_hand, "committed", product_obj.committed)
+                if product_obj.stock is None:
+                    product_obj.stock = 0
+                if product_obj.available is None:
+                    product_obj.available = 0
+                if product_obj.on_hand is None:
+                    product_obj.on_hand = 0
+                if product_obj.committed is None:
+                    product_obj.committed = 0
+
+                product_obj.stock = int(
+                    product_obj.stock) + int(i.get('add_new'))
+                product_obj.on_hand = int(
+                    product_obj.on_hand) + int(i.get('add_new'))
+                product_obj.available = int(
+                    product_obj.available) + int(i.get('add_new'))
+                product_obj.committed = int(
+                    product_obj.committed) + int(i.get('add_new'))
                 product_obj.save()
                 print("stock", product_obj.stock, "available", product_obj.available,
                       "on_hand", product_obj.on_hand, "committed", product_obj.committed)
             else:
-                raise ValidationError('Please provide variant_id or product_id')
+                raise ValidationError(
+                    'Please provide variant_id or product_id')
         serializer = ProductSerializer(
             Product.objects.all(), many=True)
         serializer_size_variant = ProductSizeVariantSerializer(
             ProductSizeVariant.objects.all(), many=True)
         return Response({'product': serializer.data, 'product_size_variant': serializer_size_variant.data})
 
+
 class BulkUpdateProductList(APIView):
     """
     endpoint for bulk update product
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('update_inventory'))
     serializer_class = BulkInventoryEntrySerializer
     queryset = ProductSizeVariant.objects.all()
+
     def get(self, request, *args, **kwargs):
         product_obj = Product.objects.all()
         product_size_variant = ProductSizeVariant.objects.all()
@@ -832,6 +827,7 @@ class BulkUpdateProductList(APIView):
         serializer_size_variant = ProductSizeVariantSerializer(
             product_size_variant, many=True)
         return Response({'product': serializer.data, 'product_size_variant': serializer_size_variant.data})
+
     def put(self, request, *args, **kwargs):
         data = request.data
         response = Response()
@@ -925,12 +921,14 @@ class BulkUpdateProductList(APIView):
             ProductSizeVariant.objects.all(), many=True)
         return Response({'product': serializer.data, 'product_size_variant': serializer_size_variant.data})
 
+
 class InventoryLocationList(generics.ListCreateAPIView):
     """
     endpoint for creating Inventory location
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_inventory_locations'))
     serializer_class = InventoryLocationSerializer
     queryset = Inventory_location.objects.filter()
 
@@ -956,7 +954,8 @@ class InventoryLocationDetail(generics.RetrieveUpdateDestroyAPIView):
     endpoint for retrieve update Inventory location
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_inventory_locations'))
     serializer_class = InventoryLocationSerializer
     queryset = Inventory_location.objects.all()
 
@@ -966,7 +965,8 @@ class InventoryTransferList(generics.ListCreateAPIView):
     endpoint for creating Inventory Transfer
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_inventory_transfers'))
     serializer_class = InventoryTransferSerializer
     queryset = Inventory_transfer.objects.filter()
 
@@ -993,21 +993,19 @@ class InventoryTransferDetail(generics.RetrieveUpdateDestroyAPIView):
     endpoint for retrieve update Inventory Transfer
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_inventory_transfers'))
     serializer_class = InventoryTransferSerializer
     queryset = Inventory_transfer.objects.filter()
 
 
-def random_with_N_digits(n):
-    range_start = 10**(n-1)
-    range_end = (10**n)-1
-    return randint(range_start, range_end)
 class PurchaseListCreateView(generics.ListCreateAPIView):
     """
     endpoint for creating product category for each vendor
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_purchase_orders'))
     serializer_class = ProductPurchasedSerializer
 
     def get_queryset(self):
@@ -1015,142 +1013,160 @@ class PurchaseListCreateView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        item_sub_total = 0
+        subtotal = 0
         grand_total = 0
         total_price = 0
         total_due = 0
-        user = self.request.user
         data = serializer.validated_data
         data1 = self.request.data
-        print("requested data",data1)
-        print("serialized data ",data)
-        if user.is_admin:
-            item_count = 0
-            received_quantity_price = 0
-            items = data1['product_purchased_item']
-            print("items", items)
-            for i in items:
-                tax_amount = 0
-                print("Inside order loop", i)
-                product_code = i['purchased_product']
-                variant_id = i['purchased_size']
-                quantity = i['order_quantity']
-                unit_price = i['unit_price']
-                received_quantity = i['received_quantity']
-                tax = i['tax']
-                if tax is None:
-                    tax = 0
-                else:
-                    tax = float(tax)
-                print("info", product_code, variant_id, quantity)
-                try:
-                    print("Inside try")
-                    single_product = Product.objects.get(pk=product_code)
-                    print("Inside try")
-                    print("Single product", single_product)
-                except Product.DoesNotExist:
-                    print("Product Does Not Exist")
+        print("requested data", data1)
+        print("serialized data ", data)
+        item_count = 0
+        received_quantity_price = 0
+        sku = None
+        items = data1['product_purchased_item']
+        other_amount = data1['other_amount']
+        other_charge = data1['other_charge']
+        if other_amount is None:
+            other_amount = 0
+        if other_charge is None:
+            other_charge = 0
+        print("items", items)
+        for i in items:
+            tax_amount = 0
+            print("Inside order loop", i)
+            product_code = i['purchased_product']
+            variant_id = i['purchased_size']
+            quantity = i['order_quantity']
+            cost_price = i['cost_price']
+            received_quantity = i['received_quantity']
+            inventory_location = i['inventory_location']
+            tax = i['tax']
+            if tax is None:
+                tax = 0
+            else:
+                tax = TaxRate.objects.get(id=tax)
+            if inventory_location is not None:
+                inventory_location = Inventory_location.objects.get(
+                    id=inventory_location)
+                print("inventory_location", inventory_location.id)
+                if inventory_location is None:
                     raise ValidationError(
-                        '{} is not available'.format(product_code))
-                print("Outside try except")
-                # print("Single Product", single_product.advance_price)
-                print("Quantity", quantity)
-                if variant_id is not None:
-                    try:
-                        variant = ProductSizeVariant.objects.get(pk=variant_id)
-                        print("Variant", variant)
-                        if variant.parent_id != single_product.id:
-                            print("first if block")
-                            raise ValidationError(
-                                '{} is not available'.format(variant_id))
-
-                    except ProductSizeVariant.DoesNotExist:
-                        print("except block")
+                        'Outlet Not Found')
+            print("info", product_code, variant_id, quantity, cost_price, tax)
+            try:
+                print("Inside try")
+                single_product = Product.objects.get(pk=product_code)
+                sku = single_product.sku
+                print("Inside try")
+                print("Single product", single_product)
+            except Product.DoesNotExist:
+                print("Product Does Not Exist")
+                raise ValidationError(
+                    '{} is not available'.format(product_code))
+            print("Outside try except")
+            # print("Single Product", single_product.advance_price)
+            print("Quantity", quantity)
+            if variant_id is not None:
+                try:
+                    variant = ProductSizeVariant.objects.get(pk=variant_id)
+                    print("Variant", variant)
+                    if variant.parent_id != single_product.id:
+                        print("first if block")
                         raise ValidationError(
                             '{} is not available'.format(variant_id))
+                    else:
+                        sku = variant.sku
 
-                total_price = float(unit_price) * float(quantity)
-                print("total price", total_price)
-                if received_quantity is not None:
-                    print("second if block")
-                    received_quantity_price = float(unit_price) * float(received_quantity)
-                    print("total price", received_quantity_price)
-                else:
-                    print("second else block")
-                    received_quantity_price = 0
-                tax_amount = tax_amount + float(float(tax) * float(total_price) / 100)
-                print("Total Price", total_price)
-                item_sub_total += total_price
-                item_count = item_count + quantity
-                print("Item Count", item_count)
-            print("Order Items loop end")
-            grand_total = item_sub_total
-            total_received_price = received_quantity_price
-            print("Due check start")
-            if data1['total_payment'] is None:
-                total_payment = 0
+                except ProductSizeVariant.DoesNotExist:
+                    print("except block")
+                    raise ValidationError(
+                        '{} is not available'.format(variant_id))
+
+            total_price = float(cost_price) * float(quantity)
+            if tax != 0:
+                tax_amount = tax_amount + \
+                    float(float(tax.tax) * float(total_price) / 100)
+            total_tax = tax_amount
+            print("total price", total_price)
+            if received_quantity is not None:
+                print("second if block")
+                received_quantity_price = float(
+                    cost_price) * float(received_quantity)
+                print("total price", received_quantity_price)
             else:
-                total_payment = float(data1['total_payment'])
-            print("Payment", type(total_payment))
-            if total_payment > 0 and total_payment <= grand_total:
-                print("Payment if block")
-                total_due = grand_total - total_payment
-                print("Total Due", total_due)
-            elif total_payment > grand_total:
-                print("Payment else block")
-                total_due = 0
-                balance = total_payment - grand_total
-                print("Balance", balance)
-            else:
-                print("Payment else block")
-                total_due = grand_total
-            print("Due check end")
-            dt = datetime.datetime.now()
-            now = int(dt.strftime("%Y%m%d%H%M%S"))
-            order_details = {
-                'total_amount': grand_total,
-                'num_of_item': item_count,
-                'total_due': total_due,
-                'total_paid': total_payment,
-            }
+                print("second else block")
+                received_quantity_price = 0
+            print("Total Price", total_price)
+            subtotal += total_price
+            item_count = item_count + quantity
+            print("Item Count", item_count)
+            i.update({
+                'subtotal': total_price,
+                'total_tax': total_tax,
+                'sku': sku,
+                'received_quantity': 0,
+            })
+        print("Order Items loop end")
+        grand_total += subtotal
+        total_received_price = received_quantity_price
+        print("Due check start")
+        total_payment = 0.0
+        total_due = (grand_total+tax_amount+float(other_amount) +
+                     float(other_charge)) - total_payment
+        balance = 0
+        print("Due check end")
+        try:
+            # for i in items:
+            #     print("Inside order loop", i)
             try:
-                ### product & size quantity need to be updated in this for loop
-                for i in items:
-                    print("Inside order loop", i)
-                try:
-                    purchase_date = data1['purchase_date']
-                    due_date = data1['due_date']
-                    received_note = data1['received_note']
-                    reference = data1['reference']
-                    rand_number = random_with_N_digits(7)
-                    purchase_order_number = 'PO-'+str(rand_number)
-                    print("PO Number", purchase_order_number)
-                    serializer.save(
-                        po_number = purchase_order_number,
-                        purchase_date= purchase_date,
-                        due_date= due_date,
-                        total_amount= grand_total,
-                        total_due= total_due,
-                        total_payment= total_payment,
-                        total_tax= tax_amount,
-                        received_quantity_price= 0,
-                        received_note= received_note,
-                        adjusment= 0,
-                        reference= reference
-                        )
-                    print("Order Save")
-                except Exception as e:
-                    print("Order Save except")
-                    print("e ",e)
-                    raise ValidationError('Order Save failed!')
-                print("Order Save end")
+                purchase_date = data1['purchase_date']
+                due_date = data1['due_date']
+                received_note = data1['received_note']
+                reference = data1['reference']
+                date_now = datetime.datetime.now()
+                date_str = date_now.strftime("%Y-%m-%d").split('-')
+                print("Date", date_str)
+                date_str = ("").join(date_str)
+                print("Date", date_str)
+                last_order = ProductPurchased.objects.latest('id')
+                new_id = int(last_order.id) + 1
+                po_number = "PO-"+str(new_id)+date_str
+                serializer.save(
+                    po_number=po_number,
+                    purchase_date=purchase_date,
+                    due_date=due_date,
+                    total_amount=grand_total+tax_amount +
+                    float(other_amount)+float(other_charge),
+                    order_total=grand_total,
+                    total_due=total_due,
+                    total_payment=total_payment,
+                    total_tax=tax_amount,
+                    other_charge=other_charge,
+                    other_amount=other_amount,
+                    received_quantity_price=0,
+                    received_note=received_note,
+                    adjusment=0,
+                    reference=reference,
+                    status="OPEN",
+                )
+                print("Order Save")
+                # purchased = ProductPurchasedPayment.objects.create(
+                #     purchased_id=new_id,
+                #     amount=grand_total,
+                #     due=total_due,
+                #     )
+
+                # print("Payment Save -->", purchased)
             except Exception as e:
                 print("Order Save except")
-                print(e)
-                raise ValidationError('Order Save failed!')    
-        else:
-            raise ValidationError(
-                'You do not have access to create Product Purchased')
+                print("e ", e)
+                raise ValidationError('Order Save failed!')
+            print("Order Save end")
+        except Exception as e:
+            print("Order Save except")
+            print(e)
+            raise ValidationError('Order Save failed!')
 
 
 class PurchaseDetailView(APIView):
@@ -1158,7 +1174,8 @@ class PurchaseDetailView(APIView):
     Endpoint for retrieving & updating a purchase history
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_purchase_orders'))
     serializer_class = ProductPurchasedSerializer
 
     def get_object(self, pk):
@@ -1173,35 +1190,163 @@ class PurchaseDetailView(APIView):
         """
         Retrieve a purchase history
         """
-        user = self.request.user
-        if user.is_admin:
-            product_purchased = self.get_object(pk)
-            return Response(product_purchased)
-        else:
-            raise ValidationError(
-                'You do not have access to view Product Purchased')
-    
+        product_purchased = self.get_object(pk)
+        return Response(product_purchased)
+
     def put(self, request, pk):
         """
         Update a purchase history
         """
-        user = self.request.user
         data = request.data
-        if user.is_admin:
-            print("Inside put")
-            print("data", data)
-            product_purchased = self.get_object(pk)
-            serializer = ProductPurchasedSerializer(
-                product_purchased, data=request.data)
-            print("Serializer", serializer.initial_data)
-            if serializer.is_valid():
-                # print("Serializer", serializer.data)
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            raise ValidationError(
-                'You do not have access to update Product Purchased')
+        print("Inside put")
+        products = Product.objects.all()
+        size = ProductSizeVariant.objects.all()
+        quantity = 0
+        try:
+            print("Inside try")
+            purchase_item_id = int(data['purchase_item_id'])
+            received_amount = int(data['received_amount'])
+            print("data received")
+            product_purchased = ProductPurchased.objects.get(pk=pk)
+            product_purchased_serializer = ProductPurchasedSerializer(
+                product_purchased)
+            print("product purchased", product_purchased.product_purchased_item.all())
+            requested_purchase_item=product_purchased.product_purchased_item.get(pk=purchase_item_id)
+            if requested_purchase_item.received_quantity == None:
+                requested_purchase_item. received_quantity = 0
+            quantity = requested_purchase_item.received_quantity
+            quantity+=received_amount
+            if requested_purchase_item.received_quantity <= requested_purchase_item.order_quantity:
+                requested_purchase_item.received_quantity = quantity
+                product = products.get(pk=requested_purchase_item.purchased_product.id)
+                if product.stock is None:
+                    product.stock = 0
+                if product.on_hand is None:
+                    product.on_hand = 0
+                if product.available is None:
+                    product.available = 0
+                product.stock = product.stock + quantity
+                product.on_hand = product.on_hand + quantity
+                product.available = product.available + quantity
+                product.save()
+                size_variant = size.get(pk=requested_purchase_item.purchased_size.id)
+                if size_variant.stock is None:
+                    size_variant.stock = 0
+                if size_variant.on_hand is None:
+                    size_variant.on_hand = 0
+                if size_variant.available is None:
+                    size_variant.available = 0
+                size_variant.stock = size_variant.stock + quantity
+                size_variant.on_hand = size_variant.on_hand + quantity
+                size_variant.available = size_variant.available + quantity
+                size_variant.save()
+            requested_purchase_item.save()
+            for i in product_purchased.product_purchased_item.all():
+                if i.received_quantity != i.order_quantity and i.received_quantity > 0:
+                    print("Inside if block for status check")
+                    product_purchased.status = "PARTIAL"  # PARTIALLY_RECEIVED
+                    product_purchased.save()
+                    break
+            return Response(product_purchased_serializer.data)
+        except:
+            print("Inside except block for status check")
+            product_purchased = ProductPurchased.objects.get(pk=pk)
+            product_purchased_serializer = ProductPurchasedSerializer(
+                product_purchased)
+            for i in product_purchased.product_purchased_item.all():
+                extra_added = 0
+                if i.received_quantity < i.order_quantity:
+                    extra_added = int(i.order_quantity) - int(i.received_quantity)
+                    i.received_quantity = i.order_quantity
+                if i.purchased_product is not None:
+                    j = products.get(pk=i.purchased_product.id)
+                    print("Product", j)
+                    if j.stock is None:
+                        j.stock = 0
+                    if j.on_hand is None:
+                        j.on_hand = 0
+                    if j.available is None:
+                        j.available = 0
+                    j.stock += extra_added
+                    j.on_hand += extra_added
+                    j.available += extra_added
+                    j.save()
+                    print("Product Save")
+                if i.purchased_size is not None:
+                    j = size.get(pk=i.purchased_size.id)
+                    print("Size", j)
+                    if j.stock is None:
+                        j.stock = 0
+                    if j.on_hand is None:
+                        j.on_hand = 0
+                    if j.available is None:
+                        j.available = 0
+                    j.stock += extra_added
+                    j.on_hand += extra_added
+                    j.available += extra_added
+                    j.save()
+                    print("Size Save")
+                i.save()
+            
+            print("Status Update ==> ",
+                  product_purchased.status)
+            product_purchased.status = "RECEIVED"
+            print("Status Update ==> ",
+                  product_purchased.status)
+            product_purchased.save()
+            return Response(product_purchased_serializer.data)
+
+
+class PurchasePaymentView(APIView):
+    """
+    Endpoint for retrieving & updating a purchase history
+    """
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_purchase_orders'))
+    serializer_class = ProductPurchasedPaymentSerializer
+
+    def get_object(self, pk):
+        try:
+            product_purchased_payment = ProductPurchasedPayment.objects.filter(
+                purchased_id=pk)
+            serializer = ProductPurchasedPaymentSerializer(
+                product_purchased_payment, many=True)
+            return serializer.data
+        except ProductPurchasedPayment.DoesNotExist:
+            raise ValidationError('Product Purchased Payment does not exist')
+
+    def get(self, request, pk):
+        """
+        Retrieve a purchase history
+        """
+        payment_objects = ProductPurchasedPayment.objects.filter(
+            purchased_id=pk)
+        payment_serializer = ProductPurchasedPaymentSerializer(
+            payment_objects, many=True)
+        return Response(payment_serializer.data)
+
+    def post(self, request, pk):
+        """
+        Update a purchase history
+        """
+        print("Inside put")
+        purchased = ProductPurchased.objects.get(pk=pk)
+        purchased.total_due = float(
+            purchased.total_due) - float(request.data['amount'])
+        purchased.total_payment = float(
+            purchased.total_payment) + float(request.data['amount'])
+        purchased.save()
+        payment_obj = ProductPurchasedPayment.objects.create(
+            purchased_id=purchased.id,
+            amount=request.data['amount'],
+            due=purchased.total_due,
+            payment_date=request.data['payment_date'],
+            payment_method=request.data['payment_method'],
+            reference=request.data['reference'],
+        )
+        serializer = ProductPurchasedPaymentSerializer(payment_obj)
+        return Response(serializer.data)
 
 
 # def search_all_product(request):
@@ -1366,7 +1511,7 @@ class PurchaseDetailView(APIView):
     #     }
     #     titles.append(p)
     # return JsonResponse(titles, safe=False)
-# 
+#
 
 # def addcomment(request, id):
 #     url = request.META.get('HTTP_REFERER')  # get last url

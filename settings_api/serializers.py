@@ -1,3 +1,4 @@
+from asyncore import read
 from drf_writable_nested.serializers import WritableNestedModelSerializer
 from rest_framework import serializers
 
@@ -44,8 +45,15 @@ class StandardShippingMethodSerializer(WritableNestedModelSerializer):
         fields = '__all__'
         read_only_fields = ('id',)
 
-class DeliveryAreaSerializer(serializers.ModelSerializer):
-    # rates = serializers.PrimaryKeyRelatedField(queryset=StandardShippingMethod.objects.all(), required=False, allow_null=True)
+class RegeionalDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegeionalDetails
+        fields = '__all__'
+        read_only_fields = ('id',)
+
+
+class DeliveryAreaSerializer(WritableNestedModelSerializer):
+    regional_details = RegeionalDetailsSerializer(many=True, required=False)
     class Meta:
         model = DeliveryArea
         fields = '__all__'
@@ -53,9 +61,54 @@ class DeliveryAreaSerializer(serializers.ModelSerializer):
 
 
 
-
 class TaxRateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaxRate
+        fields = '__all__'
+        read_only_fields = ('id',)
+################### new serializer for user permission section ###################
+
+
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Role
+        fields = '__all__'
+        read_only_fields = ('id',)
+
+
+class ResourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resource
+        fields = '__all__'
+        read_only_fields = ('id',)
+
+
+class PermissionRoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PermissionRole
+        fields = '__all__'
+        read_only_fields = ('id', 'operation',)
+
+
+class OperationSerializer(serializers.ModelSerializer):
+    permission_role_operation = PermissionRoleSerializer(
+        many=True, required=False)
+
+    class Meta:
+        model = Operation
+        fields = '__all__'
+        read_only_fields = ('id',)
+
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        exclude = ('password',)
+        read_only_fields = ('id', 'confirmation_sent_at', 'user','confirmed_at','confirmation',)
+
+
+class PaymentMethodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentMethod
         fields = '__all__'
         read_only_fields = ('id',)

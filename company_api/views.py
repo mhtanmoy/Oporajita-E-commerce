@@ -8,12 +8,13 @@ from rest_framework.views import APIView
 from rest_framework.permissions import (
     IsAuthenticated,
 )
+from user_auth.permissions import IsAdmin
 # Create your views here.
 
 
 class MetaPropertyAPI(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
 
     def get(self, request):
         if MetaProperty.objects.exists():

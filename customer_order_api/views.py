@@ -1,7 +1,9 @@
 from cgi import print_arguments
+from hashlib import new
 from urllib import response
+from pyparsing import Or
 import requests
-from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
+from django.contrib.auth.base_user import BaseUserManager
 from rest_framework.decorators import api_view, renderer_classes
 from doctest import REPORTING_FLAGS
 from django.views.decorators.csrf import csrf_exempt
@@ -11,31 +13,26 @@ from logging import exception
 from multiprocessing import context
 
 from django.contrib import messages
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (
-    BasePermission,
     IsAuthenticated,
-    IsAdminUser,
-    AllowAny,
 )
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from settings_api.models import RegeionalDetails
 
 from settings_api.serializers import DeliveryAreaSerializer
-
-# from user_auth.verification import Verification
-# from .models import UserRole, TaxList
+from user_auth.models import User
+from user_auth.permissions import HasPermission, IsAdmin
+from django.contrib.auth import get_user_model
 from .serializers import *
 
 
 # Create your views here.
-class MyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        return obj.__dict__
 
 def send_notification(user_from, user_to, title):
     user_from_instance = User.objects.get(username=user_from)
@@ -48,10 +45,12 @@ def send_notification(user_from, user_to, title):
 
 # Order Filter
 
+
 class OrderListFilter(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
-    
+    permission_classes = (
+        IsAuthenticated, HasPermission('process_manual_order'))
+
     def get(self, request, *args, **kwargs):
         start = request.GET.get('start')
         end = request.GET.get('end')
@@ -66,7 +65,8 @@ class OrderListFilter(APIView):
                 #### Today Order
                 today_orders = Order.objects.filter(
                     created__year=today.year, created__month=today.month, created__day=today.day)
-                today_orders_serializer = OrderSerializer(today_orders, many=True)
+                today_orders_serializer = OrderSerializer(
+                    today_orders, many=True)
                 data = {
                     'orders': today_orders_serializer.data,
                 }
@@ -146,7 +146,8 @@ class OrderListFilter(APIView):
             else:
                 start_date = datetime.datetime.strptime(start, "%Y-%m-%d")
                 end_date = datetime.datetime.strptime(end, "%Y-%m-%d")
-                orders = Order.objects.filter(created__range=[start_date, end_date])
+                orders = Order.objects.filter(
+                    created__range=[start_date, end_date])
                 orders_serializer = OrderSerializer(orders, many=True)
                 data = {
                     'orders': orders_serializer.data,
@@ -156,13 +157,14 @@ class OrderListFilter(APIView):
                 return Response(data, status=status.HTTP_200_OK)
 
 
-
 # class CreateOrder
 class OrderList(generics.ListAPIView):
     """
     endpoint for viewing order only for admin
     """
-    # permission_classes = (IsAuthenticated, IsAdminUser,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('process_manual_order'))
     serializer_class = OrderSerializer
     queryset = Order.objects.filter(Order_reference="ONLINE-SALE")
 
@@ -187,7 +189,8 @@ class OrderCreate(generics.CreateAPIView):
     endpoint for creating order
     """
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('process_manual_order'))
     serializer_class = OrderSerializer
 
     queryset = Order.objects.filter(Order_reference="ONLINE-SALE")
@@ -201,7 +204,10 @@ class OrderCreate(generics.CreateAPIView):
         user = self.request.user
         print(user)
         if user.is_admin:
-            user = serializer.validated_data['customer']
+            try:
+                user = serializer.validated_data['customer']
+            except:
+                user = None
             print(user)
         print('Accessed by request:   ' + self.request.data['ordered_by'])
         customer_ins = None
@@ -237,18 +243,62 @@ class OrderCreate(generics.CreateAPIView):
         else:
             ordered_by = self.request.user.username
             print("Else block, order by "+ordered_by)
-            if CustomerProfile.objects.filter(email=self.request.data['email']).exists():
+            try:
+                email = self.request.data['email']
+            except:
+                email = None
+            if email == "" or email is None:
+                email = None
+            if CustomerProfile.objects.filter(phone=self.request.data['phone']).exists():
                 try:
-                    customer_ins = CustomerProfile.objects.get(email=self.request.data['email'])
+                    customer_ins = CustomerProfile.objects.get(
+                        phone=self.request.data['phone'])
                     print("Check User for Profile")
                     print(customer_ins)
                     print(user)
                 except CustomerProfile.DoesNotExist:
                     raise ValidationError('Customer does not exist')
             else:
-                if not (self.request.data['email'] is None):
-                    raise ValidationError('Customer does not exist')
-            print("Ordered By", ordered_by)
+                new_user = None
+                if not (self.request.data['phone'] is None):
+                    username = self.request.data['phone']
+                    email = None
+                    print("Phone is not None", username)
+                    first_name = self.request.data['fullname'].split(' ')[0]
+                    last_name = self.request.data['fullname'].split(' ')[1]
+                    try:
+                        username = self.request.data['phone']
+                        email = self.request.data['email']
+                    except:
+                        username = self.request.data['email'].split('@')[0]
+                        email = self.request.data['email']
+                    if get_user_model().objects.filter(username=username).exists():
+                        return Response(
+                            {'message': 'User already exists'})
+                    if get_user_model().objects.filter(email=email).exists():
+                        return Response(
+                            {'message': 'Email already exists'})
+                    password = BaseUserManager().make_random_password()
+                    print(username, email, password, first_name,
+                          last_name, self.request.data['phone'])
+                    new_user = get_user_model().objects.create_user(username=username, email=email, password=password, first_name=first_name, last_name=last_name,
+                                                                    phone=self.request.data['phone'], is_admin=False, is_customer=True, is_active=True, is_staff=False, is_superuser=False)
+                    new_user.save()
+
+                    if new_user is not None:
+                        customer_ins = CustomerProfile.objects.create(
+                            user=new_user,
+                            phone=self.request.data['phone'],
+                            first_name=first_name,
+                            last_name=last_name,
+                            email=email,
+                            address=self.request.data['address'],
+                        )
+                        customer_ins.save()
+
+                print("User Instance ", new_user)
+            print("Ordered By ", ordered_by)
+            print("Customer ", customer_ins)
         try:
             item_count = 0
             p_codes = ''
@@ -279,27 +329,22 @@ class OrderCreate(generics.CreateAPIView):
                         print("Variant", variant)
                         if variant.parent_id != single_product.id:
                             print("first if block")
-                            return Response(
-                                {'message': '{} is not available'.format(variant_id)},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
+                            raise ValidationError(
+                                '{} is not available'.format(variant_id))
 
                         if variant.available < quantity:
                             print("second if block")
-                            return Response(
-                                {'message': '{} is not available'.format(variant_id)},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
+                            raise ValidationError(
+                                '{} is not available'.format(variant_id))
                         else:
                             print("else block")
-                            total_price = float(variant.price) * float(quantity)
-                            print("total price",total_price)
+                            total_price = float(
+                                variant.price) * float(quantity)
+                            print("total price", total_price)
                     except ProductSizeVariant.DoesNotExist:
                         print("except block")
-                        return Response(
-                            {'message': '{} is not available'.format(variant_id)},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
+                        raise ValidationError(
+                            '{} is not available'.format(variant_id))
                 else:
                     print("parent else block")
                     total_price = float(single_product.price) * float(quantity)
@@ -351,64 +396,38 @@ class OrderCreate(generics.CreateAPIView):
             if promo_code_instance == None:
                 try:
                     other_discount = float(self.request.data['other_discount'])
-                    other_discount = other_discount
+                    other_discount_type = self.request.data['other_discount_type']
+                    if other_discount_type == 'PERCENTAGE':
+                        other_discount = float(
+                            grand_total * float(other_discount) / 100)
                 except Exception as e:
+                    print(e)
                     other_discount = 0
                 if other_discount > 0:
                     grand_total = grand_total - other_discount
                     total_discount = total_discount + other_discount
             print("Other Discount Check end")
             print("Delivery Charge Check start")
-            delivery = self.request.data['value']
-            delivery_area_id = self.request.data['delivery_area_id']
-            delivery_charge = float(delivery)
-            print("Delivery ", delivery)
-            print("Delivery Area Id ", delivery_area_id)
+            try:
+                delivery_area_id = int(self.request.data['delivery_area_id'])
+                print("Delivery Area Id ", delivery_area_id)
+                if delivery_area_id is not None:
+                    try:
+                        region = RegeionalDetails.objects.get(
+                            pk=delivery_area_id)
+                        print("Region", region)
+                        delivery_charge = float(region.region_price)
+                    except RegeionalDetails.DoesNotExist:
+                        print("Region Does Not Exist")
+                        raise ValidationError(
+                            '{} is not available'.format(delivery_area_id))
+                else:
+                    print("Region else block")
+                    delivery_charge = 0
 
-
-            # try:
-            #     print("Delivery Charge Check try block")
-            #     delivery_area = DeliveryArea.objects.get(pk=delivery_area_id)
-            #     print("Delivery Area", delivery_area)
-            #     if delivery_area is None:
-            #         raise ValidationError('Delivery area does not exist')
-            #     else:
-            #         print("Delivery Area else block")
-            #         delivery_serializer = DeliveryAreaSerializer(delivery_area)
-            #         if delivery_serializer.data['area1_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area1_price']
-            #         if delivery_serializer.data['area2_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area2_price']
-            #         if delivery_serializer.data['area3_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area3_price']
-            #         if delivery_serializer.data['area4_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area4_price']
-            #         if delivery_serializer.data['area5_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area5_price']
-            #         if delivery_serializer.data['area6_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area6_price']
-            #         if delivery_serializer.data['area7_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area7_price']
-            #         if delivery_serializer.data['area8_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area8_price']
-            #         if delivery_serializer.data['area9_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area9_price']
-            #         if delivery_serializer.data['area10_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area10_price']
-            #         if delivery_serializer.data['area11_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area11_price']
-            #         if delivery_serializer.data['area12_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area12_price']
-            #         if delivery_serializer.data['area13_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area13_price']
-            #         if delivery_serializer.data['area14_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area14_price']
-            #         if delivery_serializer.data['area15_name'] == delivery:
-            #             delivery_charge = delivery_serializer.data['area15_price']
-            # except DeliveryArea.DoesNotExist:
-            #     print("Delivery Charge Check except block")
-            #     print("Delivery Area Does Not Exist")
-            #     raise ValidationError('Delivery area does not exist')
+            except Exception as e:
+                print("Delivery Charge Check except block")
+                delivery_charge = 0
             print("Delivery Charge Check end")
             print("Delivery Charge", delivery_charge)
             delivery_charge = float(delivery_charge)
@@ -421,9 +440,14 @@ class OrderCreate(generics.CreateAPIView):
                 other_charges = 0
             other_charges = float(other_charges)
             if other_charges > 0:
-                grand_total=float(grand_total) + float(other_charges)
+                grand_total = float(grand_total) + float(other_charges)
             print("Due check start")
-            payment = self.request.data['paid']
+            try:
+                payment = float(self.request.data['paid'])
+                print("Payment", payment)
+            except:
+                print("Due check except block")
+                payment = 0
             if payment is None or payment == "0":
                 payment = 0.00
             print("Payment", type(payment))
@@ -450,6 +474,18 @@ class OrderCreate(generics.CreateAPIView):
             print("Customer Email", customer_ins.email)
             print("number of items", item_count)
 
+            try:
+                pathao_city_id = self.request.data['pathao_city_id']
+                pathao_zone_id = self.request.data['pathao_zone_id']
+                pathao_area_id = self.request.data['pathao_area_id']
+                pathao_instruction = self.request.data['pathao_instruction']
+                pathao_item_description = self.request.data['pathao_item_description']
+            except:
+                pathao_city_id = 0
+                pathao_zone_id = 0
+                pathao_area_id = 0
+                pathao_instruction = None
+                pathao_item_description = None
             order_details = {
                 'total_amount': grand_total,
                 'tran_id': 'TRX' + str(now) + str(customer_ins.id),
@@ -460,6 +496,11 @@ class OrderCreate(generics.CreateAPIView):
                 'product_name': p_codes,
                 'total_due': total_due,
                 'total_paid': payment,
+                'pathao_city_id': pathao_city_id,
+                'pathao_zone_id': pathao_zone_id,
+                'pathao_area_id': pathao_area_id,
+                'pathao_instruction': pathao_instruction,
+                'pathao_item_description': pathao_item_description,
             }
             print("Order Create End")
             print("Customer Instance", customer_ins)
@@ -515,9 +556,44 @@ class OrderCreate(generics.CreateAPIView):
                         item_count=item_count,
                         product_list=p_codes,
                         status=status,
+                        pathao_city_id=pathao_city_id,
+                        pathao_zone_id=pathao_zone_id,
+                        pathao_area_id=pathao_area_id,
+                        pathao_instruction=pathao_instruction,
+                        pathao_item_description=pathao_item_description,
                         # order_item=items,
                     )
                     print("Order Save")
+                    order = Order.objects.get(pk=serializer.data['id'])
+                    date = str(order.created).split('T')
+                    date = date[0].split(' ')[0]
+                    print("Date", date)
+                    date = date.split("-")
+                    date = ("").join(date)
+                    order_id = 'ORD-'+str(order.id)+str(date)
+                    # order.pathao_merchant_order_id = str(order.id)+str(date)
+                    print("Order ID", order_id)
+                    order.order_id = order_id
+                    order.save()
+                    serializer = OrderSerializer(order)
+                    try:
+                        if self.request.data['is_sms_send'] == True:
+                            body = "Dear " + customer_ins.first_name + ", Your order has been placed successfully. Your order number is " + str(
+                                order_id) + ". Your order total is " + str(grand_total) + ". Thank you for shopping with us."
+                            print("body", body)
+                            message_detail = {
+                                "api_key": "KEY-upxs2en3c33csakv1kcwzlu0rr7rb41n",
+                                "api_secret": "de3r47mLR@FQZfCy",
+                                "request_type": "SINGLE_SMS",
+                                "message_type": "TEXT",
+                                "mobile": customer_ins.phone,
+                                "message_body": body,
+                            }
+                            response = requests.post(
+                                'https://portal.adnsms.com/api/v1/secure/send-sms', data=message_detail)
+                    except:
+                        print("SMS Send Exception")
+                        pass
                 except Exception as e:
                     print("Order Save except")
                     print(e)
@@ -528,9 +604,9 @@ class OrderCreate(generics.CreateAPIView):
                 raise ValidationError('Order Creation Failed')
             print(order_details)
             print(serializer.data)
-            messages.success(self.request, 'Your order has been placed!')
-            data = json.dumps(order_details, indent=4)
-            # return Response(data,status=200,template_name=None, headers=None, content_type=None)
+            # messages.success(self.request, 'Your order has been placed!')
+            # data = json.dumps(order_details, indent=4)
+            return Response(serializer.data, status=200)
 
         except Exception as e:
             return Response({
@@ -545,12 +621,14 @@ class OrderDetail(APIView):
     """
     endpoint for retriving,patching
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('process_manual_order'))
     serializer_class = OrderSerializer
 
     def get_object(self, id):
         try:
-            order =  Order.objects.filter(id=id)
+            order = Order.objects.filter(id=id)
             print("Order is: " + str(order))
             serializer = OrderSerializer(order, many=True)
             return serializer
@@ -563,7 +641,7 @@ class OrderDetail(APIView):
         print("is_owner", order_obj)
         # print(is_owner)
         if user.is_admin or user.is_superuser:
-            if order_obj is not None: 
+            if order_obj is not None:
                 serializer = OrderSerializer(order_obj)
                 return Response(serializer.data)
             else:
@@ -576,7 +654,7 @@ class OrderDetail(APIView):
         else:
             raise ValidationError(
                 'You do not have permissions to view this item or order does not exist')
-    
+
     def put(self, request, id, format=None):
         response = {}
         user = self.request.user
@@ -586,7 +664,8 @@ class OrderDetail(APIView):
         print("Order query is ", query)
         if is_completed == 'Closed' or is_completed == 'Rejected' or is_completed == 'Cancelled':
             print("Order if block")
-            raise ValidationError('You can not update a closed or rejected or cancelled order')
+            raise ValidationError(
+                'You can not update a closed or rejected or cancelled order')
         elif query is not None:
             print("Order else block")
             # print("request data--> ", request.data)
@@ -599,6 +678,7 @@ class OrderDetail(APIView):
                 data=request.data
             )
             print("serializer", serializer)
+            status = self.request.data['status']
             if serializer.is_valid():
                 try:
                     item_count = 0
@@ -608,26 +688,18 @@ class OrderDetail(APIView):
                     # order items
                     print("Order Items loop")
                     items = serializer.validated_data['order_item']
-                    if CustomerProfile.objects.filter(email=self.request.data['email']).exists():
+                    if CustomerProfile.objects.filter(phone=self.request.data['phone']).exists():
                         try:
                             customer_ins = CustomerProfile.objects.get(
-                                email=self.request.data['email'])
+                                phone=self.request.data['phone'])
                             print("Check User for Profile")
                             print(customer_ins)
                             print(user)
                         except CustomerProfile.DoesNotExist:
                             raise ValidationError('Customer does not exist')
                     else:
-                        if not (self.request.data['email'] is None):
+                        if not (self.request.data['phone'] is None):
                             raise ValidationError('Customer does not exist')
-                    # if customer_ins is not None:
-                    #     print("Customer Instance found")
-                    #     customer_address = Address.objects.filter(customer=customer_ins)
-
-                    # if customer_address is not None:
-                    #     print("Customer Address found")
-                    # else:
-                    #     customer_address = None
 
                     for i in items:
                         print("Inside order loop", i)
@@ -635,13 +707,19 @@ class OrderDetail(APIView):
                         variant_id = i['size'].id
                         quantity = i['quantity']
                         awaiting_stock = i['awaiting_stock']
+                        i['discount'] = 0
+                        print("product code", product_code)
+                        print("variant id", variant_id)
+                        print("quantity", quantity)
+                        print("Awaiting Stock ", awaiting_stock)
                         if awaiting_stock is None:
                             awaiting_stock = 0
-                            
+
                         print("info", product_code, variant_id, quantity)
                         try:
                             print("Inside try")
-                            single_product = Product.objects.get(pk=product_code)
+                            single_product = Product.objects.get(
+                                pk=product_code)
                             print("Inside try")
                             print("Single product", single_product)
                         except Product.DoesNotExist:
@@ -653,7 +731,8 @@ class OrderDetail(APIView):
                         print("Quantity", quantity)
                         if variant_id is not None:
                             try:
-                                variant = ProductSizeVariant.objects.get(pk=variant_id)
+                                variant = ProductSizeVariant.objects.get(
+                                    pk=variant_id)
                                 print("Variant", variant)
                                 if variant.parent_id != single_product.id:
                                     print("first if block")
@@ -675,7 +754,16 @@ class OrderDetail(APIView):
                                     total_price = float(
                                         variant.price) * float(quantity)
                                     print("total price", total_price)
-                                    variant.awaitings_stock += int(awaiting_stock)
+                                    calculate_awaiting_stock = variant.awaiting_stock
+                                    if calculate_awaiting_stock is None:
+                                        calculate_awaiting_stock = 0
+                                    calculate_stock = variant.stock
+                                    if calculate_stock is None:
+                                        calculate_stock = 0
+                                    variant.awaiting_stock = int(
+                                        calculate_awaiting_stock) + int(awaiting_stock)
+                                    variant.stock = int(
+                                        calculate_stock) + int(awaiting_stock)
                                     variant.save()
                             except ProductSizeVariant.DoesNotExist:
                                 print("except block")
@@ -686,8 +774,13 @@ class OrderDetail(APIView):
                                 )
                         else:
                             print("parent else block")
-                            total_price = float(single_product.price) * float(quantity)
-                            single_product.awaiting_stock += int(awaiting_stock)
+                            total_price = float(
+                                single_product.price) * float(quantity)
+                            calculate_awaiting_stock = single_product.awaiting_stock
+                            if calculate_awaiting_stock is None:
+                                calculate_awaiting_stock = 0
+                            single_product.awaiting_stock = int(
+                                calculate_awaiting_stock) + int(awaiting_stock)
                             single_product.save()
                         print("Total Price", total_price)
                         sub_total += total_price
@@ -702,32 +795,28 @@ class OrderDetail(APIView):
                     total_discount = 0.00
                     print("Promo Code Check start")
                     try:
-                        print("Promo Code Check try block")
-                        promo_code = self.request.data['promo_code_value']
-                        print('Promocode is: ' + promo_code)
-                        # promo limit check
-                        promo_query = Order.objects.filter(
-                            promo_code__code__iexact=promo_code
-                        ).count()
-                        try:
+                        promo_query = query.promo_code
+                        print("Promo Query", promo_query)
+                        if promo_query is not None:
+                            print("Promo Code Instance found")
                             promo_code_instance = PromoCode.objects.get(
-                                code__iexact=promo_code,
-                            )
-                            if promo_query < promo_code_instance.limit and promo_code_instance.is_valid:
-                                if promo_code_instance.discount_type == 'PERCENTAGE':
-                                    promo_discount = float(
-                                        grand_total * float(promo_code_instance.discount) / 100)
-                                    grand_total = grand_total - promo_discount
-                                    total_discount = promo_discount
-                                else:
-                                    promo_discount = float(
-                                        promo_code_instance.discount)
-                                    grand_total = grand_total - promo_discount
-                                    total_discount = promo_discount
-                        except Exception as e:
-                            print(e)
-                            raise ValidationError('Invalid promo code')
-
+                                code=promo_query)
+                            print("Promo Code Instance", promo_code_instance)
+                            if promo_code_instance.discount_type == 'PERCENTAGE':
+                                print("Promo Code is percentage")
+                                promo_discount = (
+                                    grand_total * float(promo_code_instance.discount)) / 100
+                                print("Promo Discount", promo_discount)
+                                grand_total = grand_total - promo_discount
+                                print("Grand Total", grand_total)
+                            else:
+                                print("Promo Code is not percentage")
+                                promo_discount = float(
+                                    promo_code_instance.discount)
+                                grand_total = grand_total - promo_discount
+                                print("Grand Total", grand_total)
+                            total_discount = promo_discount
+                            print("Total Discount", total_discount)
                     except Exception as e:
                         print("Promo Code Check except block")
                         promo_query = 0
@@ -735,7 +824,8 @@ class OrderDetail(APIView):
                     print("Other Discount Check start")
                     if promo_code_instance == None:
                         try:
-                            other_discount = float(self.request.data['other_discount'])
+                            other_discount = float(
+                                self.request.data['other_discount'])
                             other_discount = other_discount
                         except Exception as e:
                             other_discount = 0
@@ -743,64 +833,9 @@ class OrderDetail(APIView):
                             grand_total = grand_total - other_discount
                             total_discount = total_discount + other_discount
                     print("Other Discount Check end")
-                    print("Delivery Charge Check start")
-                    delivery = self.request.data['value']
-                    delivery_area_id = self.request.data['delivery_area_id']
-                    delivery_charge = float(delivery)
-                    print("Delivery ", delivery)
-                    print("Delivery Area Id ", delivery_area_id)
-
-                    # try:
-                    #     print("Delivery Charge Check try block")
-                    #     delivery_area = DeliveryArea.objects.get(pk=delivery_area_id)
-                    #     print("Delivery Area", delivery_area)
-                    #     if delivery_area is None:
-                    #         raise ValidationError('Delivery area does not exist')
-                    #     else:
-                    #         print("Delivery Area else block")
-                    #         delivery_serializer = DeliveryAreaSerializer(delivery_area)
-                    #         if delivery_serializer.data['area1_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area1_price']
-                    #         if delivery_serializer.data['area2_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area2_price']
-                    #         if delivery_serializer.data['area3_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area3_price']
-                    #         if delivery_serializer.data['area4_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area4_price']
-                    #         if delivery_serializer.data['area5_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area5_price']
-                    #         if delivery_serializer.data['area6_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area6_price']
-                    #         if delivery_serializer.data['area7_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area7_price']
-                    #         if delivery_serializer.data['area8_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area8_price']
-                    #         if delivery_serializer.data['area9_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area9_price']
-                    #         if delivery_serializer.data['area10_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area10_price']
-                    #         if delivery_serializer.data['area11_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area11_price']
-                    #         if delivery_serializer.data['area12_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area12_price']
-                    #         if delivery_serializer.data['area13_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area13_price']
-                    #         if delivery_serializer.data['area14_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area14_price']
-                    #         if delivery_serializer.data['area15_name'] == delivery:
-                    #             delivery_charge = delivery_serializer.data['area15_price']
-                    # except DeliveryArea.DoesNotExist:
-                    #     print("Delivery Charge Check except block")
-                    #     print("Delivery Area Does Not Exist")
-                    #     raise ValidationError('Delivery area does not exist')
-                    print("Delivery Charge Check end")
-                    print("Delivery Charge", delivery_charge)
-                    delivery_charge = float(delivery_charge)
-                    if delivery_charge > 0:
-                        grand_total = float(grand_total) + float(delivery_charge)
-
                     try:
-                        other_charges = float(self.request.data['other_charges'])
+                        other_charges = float(
+                            self.request.data['other_charges'])
                     except:
                         other_charges = 0
                     other_charges = float(other_charges)
@@ -849,7 +884,8 @@ class OrderDetail(APIView):
                             print("info", product_info, variant_info, quantity)
                             try:
                                 print("Stock update try block")
-                                product = Product.objects.get(pk=product_info.id)
+                                product = Product.objects.get(
+                                    pk=product_info.id)
                                 product.stock = product_info.stock - quantity
                                 product.save()
                                 variant = ProductSizeVariant.objects.get(
@@ -871,15 +907,17 @@ class OrderDetail(APIView):
                         print("item count ", item_count)
                         print("product_list ", p_codes)
                         print("*****")
-                        status = self.request.data['status']
                         print("Status", status)
                     except Exception as e:
                         print("Order Create except block")
                         print("exception "+e)
                         raise ValidationError('Order create failed!')
                 except Exception as e:
-                    print("exception ",e)
-                    raise ValidationError('Order Creation Failed')
+                    print("exception ", e)
+                    e = str(e)
+                    return Response(
+                        {'message': 'Order create failed!', 'error': e},
+                    )
                 serializer.save(
                     customer=customer_ins,
                     promo_code=promo_code_instance,
@@ -902,13 +940,16 @@ class OrderDetail(APIView):
                         query.paid = amount
                     else:
                         query.paid = float(total_paid) + float(amount)
-                        total_due = float(query.order_total) - float(query.paid)
+                        total_due = float(query.order_total) - \
+                            float(query.paid)
                     print("total due", total_due)
                     if total_due > 0:
                         print("total due if block")
                         total_due = 0
-                        query.balance = float(query.paid) - float(query.order_total)
-                        total_due = float(query.order_total) - float(query.paid)
+                        query.balance = float(
+                            query.paid) - float(query.order_total)
+                        total_due = float(query.order_total) - \
+                            float(query.paid)
                         if total_due < 0 or total_due == 0:
                             total_due = 0
                         print("balance", query.balance)
@@ -919,29 +960,31 @@ class OrderDetail(APIView):
                 response['total_due'] = total_due
                 response['order_details'] = serializer.data
                 response['success'] = "Order status updated successfully"
-                
 
                 # if order is accepted send email to customer
-                    # if serializer.validated_data['status'] == "ACCEPTED":
-                    #     subject = "Order accepted"
-                    #     msg = "Your order no: {} has been accepted".format(
-                    #         instance.id)
-                    #     Verification().send_order_confirmation_email(
-                    #         instance.customer.user.email,
-                    #         subject,
-                    #         msg
-                    #     )
+                # if serializer.validated_data['status'] == "ACCEPTED":
+                #     subject = "Order accepted"
+                #     msg = "Your order no: {} has been accepted".format(
+                #         instance.id)
+                #     Verification().send_order_confirmation_email(
+                #         instance.customer.user.email,
+                #         subject,
+                #         msg
+                #     )
                 return Response(response)
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors)
         else:
             raise ValidationError(
                 'You do not have permissions to update this order')
+
+
 class CheckBalance(APIView):
     """
     endpoint for Viewing Balance
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
 
     def get(self, request, format=None):
         user = self.request.user
@@ -961,11 +1004,13 @@ class CheckBalance(APIView):
             raise ValidationError(
                 'You do not have permissions to view this item or order does not exist')
 
+
 class SendMultipleSMS(APIView):
     """
     endpoint for Sending multiple sms
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
 
     def post(self, request, *args, **kwargs):
         user = self.request.user
@@ -991,11 +1036,13 @@ class SendMultipleSMS(APIView):
             raise ValidationError(
                 'You do not have permissions to view this item or order does not exist')
 
+
 class SendSingleSMS(APIView):
     """
     endpoint for Sending single sms
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
 
     def post(self, request, *args, **kwargs):
         user = self.request.user
@@ -1020,15 +1067,13 @@ class SendSingleSMS(APIView):
                 'You do not have permissions to view this item or order does not exist')
 
 
-
-
-
 ############# Pathao API #############
 class GetToken(APIView):
     """
     endpoint for getting access token
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
 
     def post(self, request, format=None):
         user = self.request.user
@@ -1054,7 +1099,7 @@ class GetToken(APIView):
                     "refresh_token": refresh_token,
                     "grant_type": "refresh_token"
                 }
-            else: 
+            else:
                 raise ValidationError(
                     'Please provide valid token type')
             print("json format data", data)
@@ -1086,9 +1131,10 @@ class CreatePathaoOrder(APIView):
     """
     endpoint for creating pathao order
     """
-    permission_classes = (IsAuthenticated,)
-    
-    def post(self,request,format=None):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
+
+    def post(self, request, format=None):
         user = self.request.user
         if user.is_admin or user.is_superuser:
             data = {
@@ -1103,14 +1149,132 @@ class CreatePathaoOrder(APIView):
             content = response.content
             response = json.loads(content)
             access_token = response['access_token']
+            id = None
+            id = request.data['order_id']
+            if id is not None:
+                order = Order.objects.get(id=request.data['order_id'])
+                print("full name: ", order.fullname)
+                print("mobile: ", order.phone)
+                print("address: ", order.address)
+                print("city: ", order.pathao_city_id)
+                print("zone: ", order.pathao_zone_id)
+                print("area: ", order.pathao_area_id)
+                print("instruction: ", order.pathao_instruction)
+                print("description: ", order.pathao_item_description)
+                print("amount: ", order.order_total)
+            order_dict = {}
+            if order is not None:
+                order_dict = {
+                    "store_id": 11028,
+                    "merchant_order_id": str(order.order_id),
+                    "recipient_name": str(order.fullname),
+                    "recipient_phone": str(order.phone),
+                    "recipient_address": str(order.address),
+                    "recipient_city": int(order.pathao_city_id),
+                    "recipient_zone": int(order.pathao_zone_id),
+                    "recipient_area": int(order.pathao_area_id),
+                    "delivery_type": 48,
+                    "item_type": 2,
+                    "item_quantity": 1,
+                    "item_weight": 0.5,
+                    "special_instruction": str(order.pathao_instruction),
+                    "item_description": str(order.pathao_item_description),
+                    "amount_to_collect": int(order.order_total),
+                }
             hed = {'Authorization': 'Bearer ' + access_token}
             print("hed", hed)
-            response = requests.post('https://hermes-api.p-stageenv.xyz/aladdin/api/v1/orders', data=request.data, headers=hed)
+            response = requests.post(
+                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/orders', data=order_dict, headers=hed)
+            if response.status_code == 200:
+                content = response.content
+                response = json.loads(content)
+                print("response", response)
+                order.pathao_status = True
+                order.save()
+                return Response(response, status=status.HTTP_200_OK)
+            else:
+                raise ValidationError(
+                    'Order could not be sended to pathao')
+        else:
+            raise ValidationError(
+                'You do not have permissions to view this order')
+
+
+class CreatePathaoBulkOrder(APIView):
+    """
+    endpoint for creating pathao order
+    """
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
+
+    def post(self, request, format=None):
+        user = self.request.user
+        if user.is_admin or user.is_superuser:
+            data = {
+                "client_id": "267",
+                "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
+                "username": "test@pathao.com",
+                "password": "lovePathao",
+                "grant_type": "password"
+            }
+            response = requests.post(
+                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/issue-token', data=data)
             content = response.content
-            print("content", content)
             response = json.loads(content)
-            print("content", response)
-            return Response(response, status=status.HTTP_200_OK)
+            access_token = response['access_token']
+            hed = {'Content-type': 'application/json',
+                   'Authorization': 'Bearer ' + access_token}
+            bulk_order = {
+                "orders": []
+            }
+            for order in request.data:
+                order_id = order['order_id']
+                try:
+                    order_obj = Order.objects.get(id=order_id)
+                except:
+                    raise ValidationError(
+                        'Order does not exist')
+                if order_obj is not None:
+                    order_dict = {
+                        "item_type": 2,
+                        "store_id": 11028,
+                        "merchant_order_id": str(order_obj.order_id),
+                        "recipient_name": str(order_obj.fullname),
+                        "recipient_phone": str(order_obj.phone),
+                        "recipient_city": int(order_obj.pathao_city_id),
+                        "recipient_zone": int(order_obj.pathao_zone_id),
+                        "recipient_area": int(order_obj.pathao_area_id),
+                        "recipient_address": str(order_obj.address),
+                        "amount_to_collect": int(order_obj.order_total),
+                        "item_quantity": 1,
+                        "item_weight": 0.5,
+                        "special_instruction": str(order_obj.pathao_instruction),
+                        "item_description": str(order_obj.pathao_item_description),
+                        "merchant_id": 2,
+                        "delivery_type": 48,
+                    }
+                    bulk_order['orders'].append(order_dict)
+
+            response = requests.post(
+                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/orders/bulk', data=json.dumps(bulk_order), headers=hed)
+            if response.status_code == 202 or response.status_code == 200:
+                content = response.content
+                response = json.loads(content)
+                print("response", response)
+                for order in request.data:
+                    order_id = order['order_id']
+                    try:
+                        order_obj = Order.objects.get(id=order_id)
+                    except:
+                        raise ValidationError(
+                            'Order does not exist')
+                    if order_obj is not None:
+                        order_obj.pathao_status = True
+                        order_obj.save()
+                return Response(response, status=status.HTTP_200_OK)
+            else:
+                raise ValidationError(
+                    'Order could not be sended to pathao')
         else:
             raise ValidationError(
                 'You do not have permissions to view this order')
@@ -1120,7 +1284,8 @@ class StoreView(APIView):
     """
     endpoint for Store
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
 
     def get(self, request, format=None):
         user = self.request.user
@@ -1139,7 +1304,8 @@ class StoreView(APIView):
             access_token = response['access_token']
             hed = {'Authorization': 'Bearer ' + access_token}
             print("hed", hed)
-            response = requests.get('https://hermes-api.p-stageenv.xyz/aladdin/api/v1/stores', headers=hed)
+            response = requests.get(
+                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/stores', headers=hed)
             content = response.content
             response = json.loads(content)
             print("content", response)
@@ -1147,7 +1313,8 @@ class StoreView(APIView):
         else:
             raise ValidationError(
                 'You do not have permissions to view this store')
-    def post(self,request,format=None):
+
+    def post(self, request, format=None):
         user = self.request.user
         if user.is_admin or user.is_superuser:
             data = {
@@ -1174,11 +1341,13 @@ class StoreView(APIView):
             raise ValidationError(
                 'You do not have permissions to create store')
 
+
 class CityList(APIView):
     """
     endpoint for city list
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
 
     def get(self, request, format=None):
         user = self.request.user
@@ -1207,15 +1376,23 @@ class CityList(APIView):
             raise ValidationError(
                 'You do not have permissions to view city list')
 
+
 class ZoneList(APIView):
     """
     endpoint for zone list
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
 
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         user = self.request.user
         if user.is_admin or user.is_superuser:
+            city_id = None
+            try:
+                city_id = int(request.data['city_id'])
+            except:
+                raise ValidationError(
+                    'Please provide valid city')
             data = {
                 "client_id": "267",
                 "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
@@ -1230,25 +1407,35 @@ class ZoneList(APIView):
             access_token = response['access_token']
             hed = {'Authorization': 'Bearer ' + access_token}
             print("hed", hed)
-            response = requests.get(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/cities/1/zone-list', headers=hed)
-            content = response.content
-            response = json.loads(content)
-            print("content", response)
-            return Response(response, status=status.HTTP_200_OK)
+
+            if city_id is not None:
+                response = requests.get(
+                    'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/cities/'+str(city_id)+'/zone-list', headers=hed)
+                content = response.content
+                response = json.loads(content)
+                print("content", response)
+                return Response(response, status=status.HTTP_200_OK)
         else:
             raise ValidationError(
                 'You do not have permissions to view zone')
+
 
 class AreaList(APIView):
     """
     endpoint for area list
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
 
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         user = self.request.user
         if user.is_admin or user.is_superuser:
+            zone_id = None
+            try:
+                zone_id = int(request.data['zone_id'])
+            except:
+                raise ValidationError(
+                    'Please provide valid zone')
             data = {
                 "client_id": "267",
                 "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
@@ -1263,21 +1450,24 @@ class AreaList(APIView):
             access_token = response['access_token']
             hed = {'Authorization': 'Bearer ' + access_token}
             print("hed", hed)
-            response = requests.get(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/zones/1/area-list', headers=hed)
-            content = response.content
-            response = json.loads(content)
-            print("content", response)
-            return Response(response, status=status.HTTP_200_OK)
+            if zone_id is not None:
+                response = requests.get(
+                    'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/zones/'+str(zone_id)+'/area-list', headers=hed)
+                content = response.content
+                response = json.loads(content)
+                print("content", response)
+                return Response(response, status=status.HTTP_200_OK)
         else:
             raise ValidationError(
                 'You do not have permissions to view area')
+
 
 class PriceCalculation(APIView):
     """
     endpoint for price calculation
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated,IsAdmin,)
 
     def post(self, request, format=None):
         user = self.request.user

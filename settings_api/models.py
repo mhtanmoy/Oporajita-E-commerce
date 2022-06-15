@@ -175,39 +175,22 @@ class DeliveryArea(models.Model):
         max_digits=10, decimal_places=2, null=True, blank=True)
     price = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True)
-    area1_name = models.CharField(max_length=100, null=True, blank=True)
-    area1_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area2_name = models.CharField(max_length=100, null=True, blank=True)
-    area2_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area3_name = models.CharField(max_length=100, null=True, blank=True)
-    area3_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area4_name = models.CharField(max_length=100, null=True, blank=True)
-    area4_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area5_name = models.CharField(max_length=100, null=True, blank=True)
-    area5_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area6_name = models.CharField(max_length=100, null=True, blank=True)
-    area6_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area7_name = models.CharField(max_length=100, null=True, blank=True)
-    area7_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area8_name = models.CharField(max_length=100, null=True, blank=True)
-    area8_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area9_name = models.CharField(max_length=100, null=True, blank=True)
-    area9_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area10_name = models.CharField(max_length=100, null=True, blank=True)
-    area10_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area11_name = models.CharField(max_length=100, null=True, blank=True)
-    area11_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area12_name = models.CharField(max_length=100, null=True, blank=True)
-    area12_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area13_name = models.CharField(max_length=100, null=True, blank=True)
-    area13_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area14_name = models.CharField(max_length=100, null=True, blank=True)
-    area14_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    area15_name = models.CharField(max_length=100, null=True, blank=True)
-    area15_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+class RegeionalDetails(models.Model):
+    id = models.AutoField(primary_key=True)
+    delivery_area = models.ForeignKey(
+        DeliveryArea,
+        on_delete=models.CASCADE,
+        related_name='regional_details',
+        null=True,
+        blank=True
+    )
+    region_name = models.CharField(max_length=100, null=True, blank=True)
+    region_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
-        return str(self.id)
+        return str(self.region_name)
 
 class TaxRate(models.Model):
     name = models.CharField(max_length=100, blank=True, null=True)
@@ -222,77 +205,127 @@ class TaxRate(models.Model):
     
     def __str__(self):
         return self.name
-    
-# class CustomUser(models.Model):
-#     role_choices = (
-#         ('Ecommerce_Staff', 'Ecommerce Staff'),
-#         ('POS_Cashier', 'Pos Cashier'),
-#         ('POS_Manager', 'Pos Manager'),
-#     )
-#     id = models.AutoField(primary_key=True)
-#     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-#     phone = models.CharField(max_length=100, null=True, blank=True)
-#     role = models.CharField(max_length=100, choices=role_choices, null=True, blank=True)
-    
-
-#     ################# Ecommerce Staff #####################
-#     #dashboard
-#     all_dashboard_section = models.BooleanField(default=False, null=True, blank=True)
-#     dashboard = models.BooleanField(default=False, null=True, blank=True)
-#     #product
-#     all_product_section = models.BooleanField(default=False, null=True, blank=True)
-#     create_edit_product = models.BooleanField(default=False, null=True, blank=True)
-#     delete_product = models.BooleanField(default=False, null=True, blank=True)
-#     print_label = models.BooleanField(default=False, null=True, blank=True)
-#     #inventory
-#     all_inventory_section = models.BooleanField(default=False, null=True, blank=True)
-#     update_inventory = models.BooleanField(default=False, null=True, blank=True)
-#     purchase_order = models.BooleanField(default=False, null=True, blank=True)
-#     inventory_return = models.BooleanField(default=False, null=True, blank=True)
-#     supplier = models.BooleanField(default=False, null=True, blank=True)
-#     inventory_location = models.BooleanField(default=False, null=True, blank=True)
-#     manage_inventory_transfer = models.BooleanField(default=False, null=True, blank=True)
-#     #order
-#     all_order_section = models.BooleanField(default=False, null=True, blank=True)
-#     process_online_order = models.BooleanField(default=False, null=True, blank=True)
-#     create_process_manual_order = models.BooleanField(default=False, null=True, blank=True)
-#     #setup
-#     all_setup_section = models.BooleanField(default=False, null=True, blank=True)
-#     manage_payment_method = models.BooleanField(default=False, null=True, blank=True)
-#     tax = models.BooleanField(default=False, null=True, blank=True)
-#     manage_tax = models.BooleanField(default=False, null=True, blank=True)
-#     #app
-#     all_app_section = models.BooleanField(default=False, null=True, blank=True)
-#     low_stock_alert = models.BooleanField(default=False, null=True, blank=True)
-#     email_marketing = models.BooleanField(default=False, null=True, blank=True)
-#     other_app = models.BooleanField(default=False, null=True, blank=True)
-#     discount = models.BooleanField(default=False, null=True, blank=True)
-#     store_popup = models.BooleanField(default=False, null=True, blank=True)
-#     product_filter = models.BooleanField(default=False, null=True, blank=True)
-#     wishlist = models.BooleanField(default=False, null=True, blank=True)
-#     #report
-#     all_report_section = models.BooleanField(default=False, null=True, blank=True)
-#     sales_report = models.BooleanField(default=False, null=True, blank=True)
-#     finance_report = models.BooleanField(default=False, null=True, blank=True)
-#     inventory_report = models.BooleanField(default=False, null=True, blank=True)
-#     other_report = models.BooleanField(default=False, null=True, blank=True)
-#     online_store_report = models.BooleanField(default=False, null=True, blank=True)
-#     #customer
-#     all_customer_section = models.BooleanField(default=False, null=True, blank=True)
-#     manage_customer = models.BooleanField(default=False, null=True, blank=True)
-
-#     ################# POS Cashier #####################
-    
-#     all_outlet_section = models.BooleanField(default=False, null=True, blank=True)
-#     outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE, null=True, blank=True)
-
-#     #sales
-#     all_sales_section = models.BooleanField(default=False, null=True, blank=True)
-#     create_process_sale = models.BooleanField(default=False, null=True, blank=True)
-#     refund_sale = models.BooleanField(default=False, null=True, blank=True)
-#     apply_discount = models.BooleanField(default=False, null=True, blank=True)
-#     on_account_sale = models.BooleanField(default=False, null=True, blank=True)
-#     lay_by_sale = models.BooleanField(default=False, null=True, blank=True)
-#     void_sale = models.BooleanField(default=False, null=True, blank=True)
 
 
+##### new tables for user permission
+
+
+class Role(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100, null=True, blank=True)
+    pos_manager = models.BooleanField(default=False)
+    pos_cashier = models.BooleanField(default=False)
+    ecommerce_staff = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+
+class Resource(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    selected = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+
+class Operation(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100, null=True, blank=True)
+    display_text = models.CharField(max_length=150, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    resource = models.ForeignKey(
+        Resource,
+        on_delete=models.CASCADE,
+        related_name='operation',
+        null=True,
+        blank=True
+    )
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class PermissionRole(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='permission_role_user',
+        null=True,
+        blank=True
+    )
+    role = models.ForeignKey(
+        Role,
+        on_delete=models.CASCADE,
+        related_name='permission_role',
+        null=True,
+        blank=True
+    )
+    operation = models.ForeignKey(
+        Operation,
+        on_delete=models.CASCADE,
+        related_name='permission_role_operation',
+        null=True,
+        blank=True
+    )
+    name = models.CharField(max_length=100, null=True, blank=True)
+
+    def __str__(self):
+        return str(self.id)
+
+
+class CustomUser(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='custom_user',
+        null=True,
+        blank=True
+    )
+    confirmation_sent_at = models.DateTimeField(auto_now_add=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True, default=None)
+    confirmation = models.BooleanField(default=False)
+    contact = models.CharField(max_length=20, null=True, blank=True)
+    email = models.EmailField(max_length=40, null=True, blank=True)
+    full_name = models.CharField(max_length=100, null=True, blank=True)
+    password = models.CharField(max_length=100, null=True, blank=True)
+    is_all_outlet = models.BooleanField(default=False)
+    outlet = models.ManyToManyField(
+        'pos_api.Outlet',
+        related_name='custom_user_outlet',
+        blank=True
+    )
+    operations = models.ManyToManyField(
+        Operation,
+        related_name='custom_user_operation',
+        blank=True
+    )
+    # permissions = models.ManyToManyField(
+    #     PermissionRole,
+    #     related_name='custom_user_permissions',
+    #     blank=True
+    # )
+    roles = models.ManyToManyField(
+        Role,
+        related_name='custom_user_roles',
+        blank=True
+    )
+
+    selected = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.id)
+
+class PaymentMethod(models.Model):
+    id = models.AutoField(primary_key=True)
+    description = models.TextField(null=True, blank=True)
+    cash_on = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.id)

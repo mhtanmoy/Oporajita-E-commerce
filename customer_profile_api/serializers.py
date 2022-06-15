@@ -60,6 +60,7 @@ class CustomerGroupSerializer(serializers.ModelSerializer):
 
 class CustomerGroupUpdateSerializer(serializers.ModelSerializer):
     customer = serializers.PrimaryKeyRelatedField(queryset=CustomerProfile.objects.all(), many=True, allow_null=True, required=False)
+    customer_details = CustomerProfileSerializer(source='customer', many=True, read_only=True)
     class Meta:
         model = CustomerGroup
         fields = (
@@ -67,6 +68,6 @@ class CustomerGroupUpdateSerializer(serializers.ModelSerializer):
             'group_name',
             'customer',
             'total_customers',
-
+            'customer_details',
             )
-        read_only_fields = ('id', 'created', 'updated',)
+        read_only_fields = ('id', 'created', 'updated', 'customer_details',)

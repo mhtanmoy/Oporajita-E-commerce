@@ -70,26 +70,25 @@ class PromoCode(models.Model):
     )
     is_active = models.BooleanField(default=True)
     usage_limit = models.BooleanField(default=True)
-    limit = models.PositiveBigIntegerField()
+    limit = models.PositiveBigIntegerField(null=True, blank=True)
     valid_from = models.DateField()
     valid_to = models.DateField(null=True, blank=True)
     expire_limit = models.BooleanField(default=False)
-    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES, default='PERCENTAGE')
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES, default='PERCENTAGE',null=True, blank=True)
     discount = models.DecimalField(decimal_places=2, max_digits=8)
-    discount_order_type = models.CharField(max_length=30, choices=DISCOUNT_ON_CHOICES, default='ALL_ORDERS')
-    orders_over = models.DecimalField(
-        MinValueValidator(0.00),decimal_places=2, max_digits=8, null=True, blank=True)
-    collections = models.ManyToManyField(
+    discount_order_type = models.CharField(max_length=30, choices=DISCOUNT_ON_CHOICES, default='ALL_ORDERS',null=True, blank=True)
+    orders_over = models.DecimalField(decimal_places=2, max_digits=8, null=True, blank=True)
+    collection = models.ManyToManyField(
         ProductCategory,
         blank=True,
         related_name='collections_promo_codes'
     )
-    products = models.ManyToManyField(
+    product = models.ManyToManyField(
         Product,
         blank=True,
         related_name='products_promo_codes'
     )
-    apply = models.CharField(max_length=80, choices=APPLY_CHOICES, default='ONCE_PER_ORDER')
+    apply = models.CharField(max_length=80, choices=APPLY_CHOICES, default='ONCE_PER_ORDER', null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

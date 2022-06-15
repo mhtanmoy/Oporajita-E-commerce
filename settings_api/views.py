@@ -1,5 +1,13 @@
+import django.apps
+import datetime
+import jwt
+from django.contrib.auth import get_user_model
+from cgitb import lookup
+from sys import api_version
 from urllib import response
 from django.http import Http404
+from django.urls import reverse
+from django.contrib.sites.shortcuts import get_current_site
 from rest_framework import status
 from array import array
 from cgi import print_directory
@@ -9,7 +17,9 @@ import json
 from re import T
 from unicodedata import name
 from rest_framework import generics
+from django.contrib.auth.base_user import BaseUserManager
 from rest_framework import authentication
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authentication import BasicAuthentication
@@ -20,6 +30,7 @@ from rest_framework.permissions import (
     AllowAny
 )
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from customer_profile_api.utils import Util
 from user_auth.permissions import IsAdmin
 from .serializers import *
 from .models import *
@@ -28,7 +39,7 @@ from .models import *
 
 class GeneralSettingAPI(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
 
     def get(self, request):
         if GeneralSetting.objects.exists():
@@ -80,7 +91,7 @@ class GeneralSettingAPI(APIView):
 
 class CheckoutSettingAPI(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
 
     def get(self, request):
         if CheckoutSetting.objects.exists():
@@ -124,7 +135,7 @@ class CheckoutSettingAPI(APIView):
 
 class CheckouFieldtSettingAPI(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
 
     def get(self, request):
         if CheckoutFieldSettings.objects.exists():
@@ -171,7 +182,7 @@ class CheckouFieldtSettingAPI(APIView):
 # Free Shipping
 class FreeShippingMethodAPI(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
 
     def get(self, request):
         if FreeShippingMethod.objects.exists():
@@ -217,7 +228,7 @@ class FreeShippingMethodAPI(APIView):
 
 class StorePickupShippingMethodAPI(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
 
     def get(self, request):
         if StorePickupShippingMethod.objects.exists():
@@ -263,7 +274,7 @@ class StorePickupShippingMethodAPI(APIView):
 
 class StandardShippingMethodAPI(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
 
     def get(self, request):
         if StandardShippingMethod.objects.exists():
@@ -309,7 +320,7 @@ class StandardShippingMethodAPI(APIView):
 
 class DeliveryAreaAPI(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = DeliveryAreaSerializer
 
     def get(self, request):
@@ -318,80 +329,8 @@ class DeliveryAreaAPI(APIView):
             delivery_areas = DeliveryArea.objects.all()
             serializer = DeliveryAreaSerializer(delivery_areas, many=True)
             response_body = serializer.data
-            new_dic = {}
-            new_list = []
-            for i in response_body:
-                new_dic['rates'] = []
-                if i['area1_name'] is not None or i['area1_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area1_name'], 'value': i['area1_price']})
-                if i['area2_name'] is not None or i['area2_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area2_name'], 'value': i['area2_price']})
-                if i['area3_name'] is not None or i['area3_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area3_name'], 'value': i['area3_price']})
-                if i['area4_name'] is not None or i['area4_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area4_name'], 'value': i['area4_price']})
-                if i['area5_name'] is not None or i['area5_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area5_name'], 'value': i['area5_price']})
-                if i['area6_name'] is not None or i['area6_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area6_name'], 'value': i['area6_price']})
-                if i['area7_name'] is not None or i['area7_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area7_name'], 'value': i['area7_price']})
-                if i['area8_name'] is not None or i['area8_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area8_name'], 'value': i['area8_price']})
-                if i['area9_name'] is not None or i['area9_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area9_name'], 'value': i['area9_price']})
-                if i['area10_name'] is not None or i['area10_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area10_name'], 'value': i['area10_price']})
-                if i['area11_name'] is not None or i['area11_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area11_name'], 'value': i['area11_price']})
-                if i['area12_name'] is not None or i['area12_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area12_name'], 'value': i['area12_price']})
-                if i['area13_name'] is not None or i['area13_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area13_name'], 'value': i['area13_price']})
-                if i['area14_name'] is not None or i['area14_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area14_name'], 'value': i['area14_price']})
-                if i['area15_name'] is not None or i['area15_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': i['area15_name'], 'value': i['area15_price']})
-                else:
 
-                    ####################### Outside rate list object ##############################
-                    # new_dic['id'] = i['id']
-                    # new_dic['country'] = i['country']
-                    # new_dic['shipping_rate_name'] = i['shipping_rate_name']
-                    # new_dic['weight_lower_limit'] = i['weight_lower_limit']
-                    # new_dic['weight_upper_limit'] = i['weight_upper_limit']
-                    # new_dic['price'] = i['price']
-                    # new_dic['shipping_method'] = i['shipping_method']
-                    ####################### end 1st format ##############################
-
-                    new_dic['rates'].append({
-                        'id': i['id'],
-                        'country': i['country'],
-                        'shipping_rate_name': i['shipping_rate_name'],
-                        'weight_lower_limit': i['weight_lower_limit'],
-                        'weight_upper_limit': i['weight_upper_limit'],
-                        'price': i['price'],
-                        'shipping_method': i['shipping_method'],
-                    })
-                new_list.append(new_dic)
-                new_dic = {}
-
-            return Response(new_list)
+            return Response(response_body)
         else:
             return Response({"message": "You are not authorized to access this page"})
 
@@ -399,105 +338,19 @@ class DeliveryAreaAPI(APIView):
         user = self.request.user
         if user.is_admin:
             data = request.data
-            data_copy = data.copy()
-            req_dic = {}
-            count = 1
-            for key, value in data.items():
-                if key == 'rates':
-                    for i in value:
-                        # print(i.keys())
-                        if i.keys() == {'name', 'value'}:
-                            data_copy[key][count-1]['area' +
-                                                    str(count) + '_name'] = i['name']
-                            data_copy[key][count-1]['area' +
-                                                    str(count) + '_price'] = i['value']
-                            del data_copy[key][count-1]['name']
-                            del data_copy[key][count-1]['value']
-                            count += 1
-                        req_dic.update(i)
-                else:
-                    data_copy[key] = value
-                    req_dic[key] = value
-            serializer = DeliveryAreaSerializer(data=req_dic)
+
+            serializer = DeliveryAreaSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
-                response_body = serializer.data
-                new_dic = {}
-                new_list = []
-                new_dic['rates'] = []
-                if response_body['area1_name'] is not None or response_body['area1_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': response_body['area1_name'], 'value': response_body['area1_price']})
-                if response_body['area2_name'] is not None or response_body['area2_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': response_body['area2_name'], 'value': response_body['area2_price']})
-                if response_body['area3_name'] is not None or response_body['area3_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': response_body['area3_name'], 'value': response_body['area3_price']})
-                if response_body['area4_name'] is not None or response_body['area4_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': response_body['area4_name'], 'value': response_body['area4_price']})
-                if response_body['area5_name'] is not None or response_body['area5_price'] is not None:
-                    new_dic['rates'].append(
-                        {'name': response_body['area5_name'], 'value': response_body['area5_price']})
-                # if i['area6_name'] is not None or i['area6_price'] is not None:
-                #     new_dic['rates'].append(
-                #         {'name': i['area6_name'], 'value': i['area6_price']})
-                # if i['area7_name'] is not None or i['area7_price'] is not None:
-                #     new_dic['rates'].append(
-                #         {'name': i['area7_name'], 'value': i['area7_price']})
-                # if i['area8_name'] is not None or i['area8_price'] is not None:
-                #     new_dic['rates'].append(
-                #         {'name': i['area8_name'], 'value': i['area8_price']})
-                # if i['area9_name'] is not None or i['area9_price'] is not None:
-                #     new_dic['rates'].append(
-                #         {'name': i['area9_name'], 'value': i['area9_price']})
-                # if i['area10_name'] is not None or i['area10_price'] is not None:
-                #     new_dic['rates'].append(
-                #         {'name': i['area10_name'], 'value': i['area10_price']})
-                # if i['area11_name'] is not None or i['area11_price'] is not None:
-                #     new_dic['rates'].append(
-                #         {'name': i['area11_name'], 'value': i['area11_price']})
-                # if i['area12_name'] is not None or i['area12_price'] is not None:
-                #     new_dic['rates'].append(
-                #         {'name': i['area12_name'], 'value': i['area12_price']})
-                # if i['area13_name'] is not None or i['area13_price'] is not None:
-                #     new_dic['rates'].append(
-                #         {'name': i['area13_name'], 'value': i['area13_price']})
-                # if i['area14_name'] is not None or i['area14_price'] is not None:
-                #     new_dic['rates'].append(
-                #         {'name': i['area14_name'], 'value': i['area14_price']})
-                # if i['area15_name'] is not None or i['area15_price'] is not None:
-                #     new_dic['rates'].append(
-                #         {'name': i['area15_name'], 'value': i['area15_price']})
-                else:
 
-                    ###################### Outside rate list object ##############################
-                    new_dic['id'] = response_body['id']
-                    new_dic['country'] = response_body['country']
-                    new_dic['shipping_rate_name'] = response_body['shipping_rate_name']
-                    new_dic['weight_lower_limit'] = response_body['weight_lower_limit']
-                    new_dic['weight_upper_limit'] = response_body['weight_upper_limit']
-                    new_dic['price'] = response_body['price']
-                    new_dic['shipping_method'] = response_body['shipping_method']
-                    ###################### end 1st format ##############################
-                    # new_dic['rates'].append({
-                    #     'id': response_body['id'],
-                    #     'country': response_body['country'],
-                    #     'shipping_rate_name': response_body['shipping_rate_name'],
-                    #     'weight_lower_limit': response_body['weight_lower_limit'],
-                    #     'weight_upper_limit': response_body['weight_upper_limit'],
-                    #     'price': response_body['price'],
-                    #     'shipping_method': response_body['shipping_method'],
-                    # })
-                new_list.append(new_dic)
-
-                return Response(new_list)
+                return Response(
+                    serializer.data
+                )
             else:
                 raise ValidationError(serializer.errors)
         else:
             return Response({"message": "You are not authorized to access this page"})
-    
+
     def delete(self, request):
         user = request.user
         if user.is_admin:
@@ -509,7 +362,7 @@ class DeliveryAreaAPI(APIView):
 
 class DeliveryAreaDetailAPI(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = DeliveryAreaSerializer
 
     def get(self, request, pk):
@@ -524,9 +377,30 @@ class DeliveryAreaDetailAPI(generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, pk):
         user = self.request.user
         if user.is_admin:
+            data = request.data
             delivery_area = DeliveryArea.objects.get(pk=pk)
-            serializer = DeliveryAreaSerializer(
-                delivery_area, data=request.data)
+            serializer = DeliveryAreaSerializer(delivery_area, data=data)
+            # name=()
+            # for i in data["regional_details"]:
+            #     name += (i["region_name"],)
+            #     # print(i.get('region_name'), i.get('region_price'))
+            #     if i.get('region_name') is not None and i.get('region_price') is not None:
+            #         print("Region name & price is not null")
+            #         rd = RegeionalDetails.objects.filter(delivery_area_id=pk)
+            #         print(rd)
+            #         if rd.exists():
+            #             print("Region name & price is already exists")
+            #             rd.update(region_name=i.get('region_name'))
+            #             rd.update(region_price=i.get('region_price'))
+            #             print("Region name & price is updated")
+            #         else:
+            #             print("Region name & price is not exists")
+            #             RegeionalDetails.objects.create(
+            #                 region_name=i.get('region_name'), region_price=i.get('region_price'), delivery_area_id=pk)
+            #             print("Region name & price is created")
+            # # print("Name of region ",name)
+            # regionaldetailis = RegeionalDetails.objects.filter(delivery_area_id=pk).exclude(region_name__in=name).delete()
+            # print("regionaldetailis",regionaldetailis)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
@@ -547,357 +421,57 @@ class DeliveryAreaDetailAPI(generics.RetrieveUpdateDestroyAPIView):
         else:
             return Response({"message": "You are not authorized to access this page"})
 
-# class StandardShippingMethodAPI(APIView):
-#     authentication_classes = (JWTAuthentication,)
-#     permission_classes = (IsAuthenticated,)
 
-#     def get(self, request):
-#         if StandardShippingMethod.objects.exists():
-#             general_setting = StandardShippingMethod.objects.all()
-#             serializer = StandardShippingMethodSerializer(general_setting, many=True)
-#             new_list = []
-#             new_dic = {}
-#             for i in serializer.data:
-#                 for key, value in i.items():
-#                     if key == 'rates':
-#                         new_dic[key] = []
-#                         for j in value:
-#                             # replace area_name with name and area_price with value
-#                             if j['area1_name'] and j['area1_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area1_name'], 'value': j['area1_price']})
-#                             if j['area2_name'] and j['area2_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area2_name'], 'value': j['area2_price']})
-#                             if j['area3_name'] and j['area3_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area3_name'], 'value': j['area3_price']})
-#                             if j['area4_name'] and j['area4_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area4_name'], 'value': j['area4_price']})
-#                             if j['area5_name'] and j['area5_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area5_name'], 'value': j['area5_price']})
-#                             if j['area6_name'] and j['area6_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area6_name'], 'value': j['area6_price']})
-#                             if j['area7_name'] and j['area7_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area7_name'], 'value': j['area7_price']})
-#                             if j['area8_name'] and j['area8_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area8_name'], 'value': j['area8_price']})
-#                             if j['area9_name'] and j['area9_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area9_name'], 'value': j['area9_price']})
-#                             if j['area10_name'] and j['area10_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area10_name'], 'value': j['area10_price']})
-#                             if j['area11_name'] and j['area11_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area11_name'], 'value': j['area11_price']})
-#                             if j['area12_name'] and j['area12_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area12_name'], 'value': j['area12_price']})
-#                             if j['area13_name'] and j['area13_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area13_name'], 'value': j['area13_price']})
-#                             if j['area14_name'] and j['area14_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area14_name'], 'value': j['area14_price']})
-#                             if j['area15_name'] and j['area15_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': j['area15_name'], 'value': j['area15_price']})
-#                             new_dic[key].append({
-#                                 'id': j['id'],
-#                                 'shipping_rate_name': j['shipping_rate_name'],
-#                                 'weight_lower_limit': j['weight_lower_limit'],
-#                                 'weight_upper_limit': j['weight_upper_limit'],
-#                                 'price': j['price'],
-#                             })
-#                     else:
-#                         new_dic[key] = value
-#                 new_list.append(new_dic)
-#                 new_dic = {}
-#             return Response(new_list)
-#         else:
-#             raise ValidationError("Standard Shipping Method not found")
+class DeliveryAreaCountryDetail(generics.RetrieveUpdateDestroyAPIView):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = DeliveryAreaSerializer
+    lookup_field = 'country'
+    queryset = DeliveryArea.objects.all()
 
-#     def post(self, request):
-#         serializer = StandardShippingMethodSerializer(data=request.data)
-#         if serializer.is_valid():
-#             try:
-#                 data = request.data
-#                 data_copy = data.copy()
-#                 rate = {}
-#                 count = 1
-#                 for key, value in data.items():
-#                     if key == 'rates':
-#                         for i in value:
-#                             # print(i.keys())
-#                             if i.keys() == {'name', 'value'}:
-#                                 data_copy[key][count-1]['area' +
-#                                     str(count) + '_name'] = i['name']
-#                                 data_copy[key][count-1]['area' +
-#                                     str(count) + '_price'] = i['value']
-#                                 del data_copy[key][count-1]['name']
-#                                 del data_copy[key][count-1]['value']
-#                                 count += 1
-#                             rate.update(i)
-#                     else:
-#                         data_copy[key] = value
-#                 # print("data ",data)
-#                 data_copy['rates'] = [rate]
-#                 data = data_copy
+    def get_queryset(self):
+        return super().get_queryset()
 
-#                 serializer = StandardShippingMethodSerializer(data=data)
-#                 if serializer.is_valid():
-#                     serializer.save()
-#                     response = Response()
-#                     response_copy = serializer.data
-#                     new_dic = {}
-#                     for key, value in response_copy.items():
-#                         if key == 'rates':
-#                             new_dic[key] = []
-#                             for i in value:
-#                                 # replace area_name with name and area_price with value
-#                                 new_dic[key].append({
-#                                     'id': i['id'],
-#                                     'shipping_rate_name': i['shipping_rate_name'],
-#                                     'weight_lower_limit': i['weight_lower_limit'],
-#                                     'weight_upper_limit': i['weight_upper_limit'],
-#                                     'price': i['price'],
-#                                 })
-#                                 if i['area1_name'] and i['area1_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area1_name'], 'value': i['area1_price']})
-#                                 if i['area2_name'] and i['area2_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area2_name'], 'value': i['area2_price']})
-#                                 if i['area3_name'] and i['area3_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area3_name'], 'value': i['area3_price']})
-#                                 if i['area4_name'] and i['area4_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area4_name'], 'value': i['area4_price']})
-#                                 if i['area5_name'] and i['area5_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area5_name'], 'value': i['area5_price']})
-#                                 if i['area6_name'] and i['area6_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area6_name'], 'value': i['area6_price']})
-#                                 if i['area7_name'] and i['area7_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area7_name'], 'value': i['area7_price']})
-#                                 if i['area8_name'] and i['area8_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area8_name'], 'value': i['area8_price']})
-#                                 if i['area9_name'] and i['area9_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area9_name'], 'value': i['area9_price']})
-#                                 if i['area10_name'] and i['area10_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area10_name'], 'value': i['area10_price']})
-#                                 if i['area11_name'] and i['area11_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area11_name'], 'value': i['area11_price']})
-#                                 if i['area12_name'] and i['area12_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area12_name'], 'value': i['area12_price']})
-#                                 if i['area13_name'] and i['area13_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area13_name'], 'value': i['area13_price']})
-#                                 if i['area14_name'] and i['area14_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area14_name'], 'value': i['area14_price']})
-#                                 if i['area15_name'] and i['area15_price'] is not None:
-#                                     new_dic[key].append(
-#                                         {'name': i['area15_name'], 'value': i['area15_price']})
-#                         else:
-#                             new_dic[key] = value
-#                     response.data = new_dic
-#                     return Response(response.data)
-#                 else:
-#                     raise ValidationError(serializer.errors)
-#             except StandardShippingMethod.DoesNotExist:
-#                 serializer.save()
-#                 return Response(serializer.data)
-#         else:
-#             raise ValidationError(serializer.errors)
+    def get(self, request, country):
+        user = self.request.user
+        if user.is_admin:
+            delivery_area = DeliveryArea.objects.filter(country=country)
+            serializer = DeliveryAreaSerializer(delivery_area, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({"message": "You are not authorized to access this page"})
 
-#     def put(self, request, format=None):
-#         if StandardShippingMethod.objects.exists():
-#             id = request.data['id']
-#             general_setting = StandardShippingMethod.objects.get(id=id)
-#             data = request.data
-#             data_copy = data.copy()
-#             rate = {}
-#             count = 1
-#             for key, value in data.items():
-#                 if key == 'rates':
-#                     for i in value:
-#                         # print(i.keys())
-#                         if i.keys() == {'name', 'value'}:
-#                             data_copy[key][count-1]['area' +
-#                                                     str(count) + '_name'] = i['name']
-#                             data_copy[key][count-1]['area' +
-#                                                     str(count) + '_price'] = i['value']
-#                             del data_copy[key][count-1]['name']
-#                             del data_copy[key][count-1]['value']
-#                             count += 1
-#                         rate.update(i)
-#                 else:
-#                     data_copy[key] = value
-#             # print("data ",data)
-#             data_copy['rates'] = [rate]
-#             data = data_copy
-#             serializer = StandardShippingMethodSerializer(
-#                 general_setting, data=data)
-#             if serializer.is_valid():
-#                 serializer.save()
-#                 new_dic = {}
-#                 for key, value in serializer.data.items():
-#                     if key == 'rates':
-#                         new_dic[key] = []
-#                         for i in value:
-#                             # replace area_name with name and area_price with value
-#                             if i['area1_name'] and i['area1_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area1_name'], 'value': i['area1_price']})
-#                             if i['area2_name'] and i['area2_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area2_name'], 'value': i['area2_price']})
-#                             if i['area3_name'] and i['area3_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area3_name'], 'value': i['area3_price']})
-#                             if i['area4_name'] and i['area4_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area4_name'], 'value': i['area4_price']})
-#                             if i['area5_name'] and i['area5_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area5_name'], 'value': i['area5_price']})
-#                             if i['area6_name'] and i['area6_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area6_name'], 'value': i['area6_price']})
-#                             if i['area7_name'] and i['area7_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area7_name'], 'value': i['area7_price']})
-#                             if i['area8_name'] and i['area8_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area8_name'], 'value': i['area8_price']})
-#                             if i['area9_name'] and i['area9_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area9_name'], 'value': i['area9_price']})
-#                             if i['area10_name'] and i['area10_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area10_name'], 'value': i['area10_price']})
-#                             if i['area11_name'] and i['area11_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area11_name'], 'value': i['area11_price']})
-#                             if i['area12_name'] and i['area12_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area12_name'], 'value': i['area12_price']})
-#                             if i['area13_name'] and i['area13_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area13_name'], 'value': i['area13_price']})
-#                             if i['area14_name'] and i['area14_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area14_name'], 'value': i['area14_price']})
-#                             if i['area15_name'] and i['area15_price'] is not None:
-#                                 new_dic[key].append(
-#                                     {'name': i['area15_name'], 'value': i['area15_price']})
-#                             new_dic[key].append({
-#                                 'id': i['id'],
-#                                 'shipping_rate_name': i['shipping_rate_name'],
-#                                 'weight_lower_limit': i['weight_lower_limit'],
-#                                 'weight_upper_limit': i['weight_upper_limit'],
-#                                 'price': i['price'],
-#                             })
-#                     else:
-#                         new_dic[key] = value
-#                 return Response(new_dic)
-#             else:
-#                 raise ValidationError(serializer.errors)
-#         else:
-#             raise ValidationError("Standard Shipping Method not found")
-    # def delete(self, request, format=None):
-    #     id = request.data.get('id')
-    #     area = request.data.get('area')
-    #     if area == "country":
-    #         try:
-    #             shipping_method = StandardShippingMethod.objects.get(id=id)
-    #             shipping_method.delete()
-    #             return Response(
-    #                 {'message': 'Standard Shipping Method deleted successfully'}, status=status.HTTP_200_OK
-    #             )
-    #         except StandardShippingMethod.DoesNotExist:
-    #             return Response(
-    #                 {'message': 'Standard Shipping Method not found'}, status=status.HTTP_404_NOT_FOUND
-    #             )
-
-    #     elif area == "rate":
-    #         try:
-    #             deliver_area = DeliveryArea.objects.get(id=id)
-    #             deliver_area.delete()
-    #             return Response(
-    #                 {'message': 'Delivery Area deleted successfully'}, status=status.HTTP_200_OK
-    #             )
-    #         except DeliveryArea.DoesNotExist:
-    #             return Response(
-    #                 {'message': 'Delivery Area not found'}, status=status.HTTP_404_NOT_FOUND
-    #             )
+    def delete(self, request, country):
+        user = self.request.user
+        if user.is_admin:
+            if DeliveryArea.objects.filter(country=country).exists():
+                delivery_area = DeliveryArea.objects.filter(country=country)
+                delivery_area.delete()
+                return Response({"message": "Delivery Area deleted successfully"})
+            else:
+                return Response({"message": "Delivery Area does not exist"})
+        else:
+            return Response({"message": "You are not authorized to access this page"})
 
 
-# class ShippingMethodAPI(generics.CreateAPIView):
-#     authentication_classes = (JWTAuthentication,)
-#     permission_classes = (IsAuthenticated,)
+class RegionListAPI(generics.ListAPIView):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = RegeionalDetailsSerializer
 
-#     """
-#     Create, Retrieve, Update, Delete Shipping Method
-#     """
-#     # authentication_classes = (BasicAuthentication,)
-#     permission_classes = (IsAuthenticated,)
-#     serializer_class = ShippingMethodSerializer
-#     queryset = FreeShippingMethod.objects.all()
-
-#     def perform_create(self, request):
-#         print("Recieved requested data is: ", request.data)
-#         data = {
-#             'amount_mesurement': request.data['amount_mesurement'],
-#             'amount': request.data['amount'],
-#             'weight_mesurement': request.data['weight_mesurement'],
-#             'weight': request.data['weight'],
-#             'free_shipping': request.data['free_shipping'],
-#             'store_pickup': request.data['store_pickup'],
-#             'standard_shipping': request.data['standard_shipping'],
-#             'country': request.data['country'],
-#             'shipping_rate_name': request.data['shipping_rate_name'],
-#             'weight_lower_limit': request.data['weight_lower_limit'],
-#             'weight_upper_limit': request.data['weight_upper_limit'],
-#             'price': request.data['price'],
-#             'instruction': request.data['instruction'],
-#             # 'created': request.data['created'],
-#             # 'updated': request.data['updated']
-#         }
-#         # request.data
-#         print("Extracted data for shipping method model: ", data)
-#         delivery_info = request.data.pop('delivery_areas')
-#         print("After pop: ", delivery_info)
-#         delivery_ins = FreeShippingMethod.objects.create(**data)
-#         print(delivery_ins)
-#         if delivery_ins:
-#             delivery_ins2 = DeliveryArea.objects.create(**delivery_info)
-#             delivery_ins2.shipping_method = delivery_ins
-#             delivery_ins2.save()
-#             print(delivery_ins2)
-#             return delivery_ins2
-#         else:
-#             raise ValidationError("Shipping Method not created")
+    def get(self, request):
+        user = self.request.user
+        if user.is_admin:
+            regions = RegeionalDetails.objects.all()
+            serializer = RegeionalDetailsSerializer(regions, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({"message": "You are not authorized to access this page"})
 
 
 class TaxRateList(generics.ListCreateAPIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
     """
     endpoint for creating each tax rate
     """
@@ -924,10 +498,427 @@ class TaxRateList(generics.ListCreateAPIView):
 
 class TaxRateDetail(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin)
     """
     endpoint for retrieve update delete tax rate
     """
-    # permission_classes = (IsAuthenticated,)
     serializer_class = TaxRateSerializer
     queryset = TaxRate.objects.all()
+
+
+########### API for custom user permission ##############
+
+
+class RoleList(generics.ListCreateAPIView):
+    """
+    Endpoint for creating User Role
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = RoleSerializer
+    queryset = Role.objects.all()
+
+    def get_queryset(self):
+        queryset = Role.objects.all()
+        return queryset
+
+    def perform_create(self, serializer):
+        if self.request.user.is_admin:
+            try:
+                serializer.save()
+            except:
+                raise ValidationError(
+                    'Failed to add role')
+        else:
+            raise ValidationError(
+                'You do not have access to create role')
+
+
+class RoleDetails(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint for updating User Role
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = RoleSerializer
+    queryset = Role.objects.all()
+
+
+class ResourceList(generics.ListCreateAPIView):
+    """
+    Endpoint for creating Resource
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = ResourceSerializer
+    queryset = Resource.objects.all()
+
+    def get_queryset(self):
+        queryset = Resource.objects.all()
+        return queryset
+
+    def perform_create(self, serializer):
+        if self.request.user.is_admin:
+            try:
+                serializer.save()
+            except:
+                raise ValidationError(
+                    'Failed to add resource')
+        else:
+            raise ValidationError(
+                'You do not have access to create resource')
+
+
+class ResourceDetails(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint for updating Resource
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = ResourceSerializer
+    queryset = Resource.objects.all()
+
+
+class PermissionRoleList(generics.ListCreateAPIView):
+    """
+    Endpoint for creating Permission Role
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = PermissionRoleSerializer
+    queryset = PermissionRole.objects.all()
+
+    def get_queryset(self):
+        queryset = PermissionRole.objects.all()
+        return queryset
+
+    def perform_create(self, serializer):
+        if self.request.user.is_admin:
+            try:
+                serializer.save()
+            except:
+                raise ValidationError(
+                    'Failed to add permission role')
+        else:
+            raise ValidationError(
+                'You do not have access to create permission role')
+
+
+class PermissionRoleDetails(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint for updating Permission Role
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = PermissionRoleSerializer
+    queryset = PermissionRole.objects.all()
+
+
+class OperationList(generics.ListCreateAPIView):
+    """
+    Endpoint for creating Operation
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = OperationSerializer
+    queryset = Operation.objects.all()
+
+    def get_queryset(self):
+        queryset = Operation.objects.all()
+        return queryset
+
+    def perform_create(self, serializer):
+        if self.request.user.is_admin:
+            try:
+                serializer.save()
+            except:
+                raise ValidationError(
+                    'Failed to add operation')
+        else:
+            raise ValidationError(
+                'You do not have access to create operation')
+
+
+class OperationDetails(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint for updating Operation
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = OperationSerializer
+    queryset = Operation.objects.all()
+
+
+# end new apis for customer user permission
+class CreatePermissionTable(APIView):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin)
+
+    def get(self, request):
+        if django.apps.apps.get_models():
+            for i in django.apps.apps.get_models():
+                PermissionTableList.objects.get_or_create(
+                    model_name=i.__name__)
+            return Response({"message": "Permission table created successfully"})
+
+
+class CustomUserList(generics.ListCreateAPIView):
+    """
+    Endpoint for creating User
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = CustomUserSerializer
+    queryset = CustomUser.objects.all()
+
+    def get_queryset(self):
+        queryset = CustomUser.objects.all()
+        return queryset
+
+    def perform_create(self, serializer):
+        if self.request.user:
+            try:
+                email = serializer.validated_data['email']
+                print(email)
+                try:
+                    phone = serializer.validated_data['contact']
+                except:
+                    phone = None
+                print(phone)
+                full_name = first_name = last_name = None
+                username = email.split('@')[0]
+                print(username)
+                password = BaseUserManager().make_random_password()
+                print(password)
+                if CustomUser.objects.filter(email=email).exists():
+                    print("email exists")
+                    raise ValidationError(
+                        'Email already exists')
+
+                elif get_user_model().objects.filter(email=email).exists():
+                    print("email exists")
+                    try:
+                        serializer.save(user=new_user, confirmed_at=None)
+                        new_user = get_user_model().objects.get(email=email)
+                        setting = GeneralSetting.objects.first()
+                        token = RefreshToken.for_user(new_user).access_token
+                        current_site = get_current_site(self.request).domain
+                        relativeLink = reverse('activate-custom-user-account')
+                        activate_url = "{}://{}?token={}".format(
+                            current_site, relativeLink, str(token))
+                        print(activate_url)
+                        email_body = "Welcome " + new_user.email+"!\n\nA Ecommerce Staff account has been created using this email.\n\n"\
+                            "To complete the setup of your account please click here. \n\n" +\
+                            "If the above link is not clickable, try copying and pasting the link given below into the address bar of your web browser. \n\n" +\
+                            activate_url
+                        print(email_body)
+                        data = {
+                            'email_subject': 'New account activation from '+setting.store_name,
+                            'email_body': email_body,
+                            'email_to': new_user.email,
+                        }
+                        Util.send_email(data)
+                        print("Email sent")
+                        print("User saved")
+                    except Exception as e:
+                        print(e)
+                        message = (str(e)).split('string=')[1]
+                        message = message.split(',')[0].replace("'", "")
+                        raise ValidationError(str(message))
+                else:
+                    print("email not exists")
+                    try:
+                        new_user = get_user_model().objects.create_user(
+                            email=email,
+                            password=password,
+                            username=username,
+                            phone=phone,
+                            first_name=first_name,
+                            last_name=last_name,
+                            is_admin=False,
+                            is_customer=False,
+                            is_active=True,
+                            is_staff=True,
+                            is_superuser=False
+                        )
+                        new_user.save()
+                        print(new_user)
+                        try:
+                            serializer.save(user=new_user, confirmed_at=None)
+                            print("User saved")
+                            new_user = get_user_model().objects.get(email=email)
+                            setting = GeneralSetting.objects.first()
+                            token = RefreshToken.for_user(
+                                new_user).access_token
+                            current_site = get_current_site(
+                                self.request).domain
+                            relativeLink = reverse(
+                                'activate-custom-user-account')
+                            print(relativeLink)
+                            activate_url = "{}{}?token={}".format(
+                                current_site, relativeLink, str(token))
+                            print(activate_url)
+                            email_body = "Welcome " + new_user.email+"!\n\nA Ecommerce Staff account has been created using this email.\n\n"\
+                                "To complete the setup of your account please click here. \n\n" +\
+                                "If the above link is not clickable, try copying and pasting the link given below into the address bar of your web browser. \n\n" +\
+                                activate_url
+                            print(email_body)
+                            data = {
+                                'email_subject': 'New account activation from '+setting.store_name,
+                                'email_body': email_body,
+                                'email_to': new_user.email,
+                            }
+                            Util.send_email(data)
+                            print("Email sent")
+                            print("User saved")
+                        except Exception as e:
+                            print("Exception ==> ", str(e))
+                            raise ValidationError(str(e))
+                    except Exception as e:
+                        print(e)
+                        message = (str(e)).split('string=')[1]
+                        message = message.split(',')[0].replace("'", "")
+                        raise ValidationError(str(message))
+            except Exception as e:
+                print(e)
+                message = (str(e)).split('string=')[1]
+                message = message.split(',')[0].replace("'", "")
+                raise ValidationError(str(message))
+        else:
+            raise ValidationError(
+                'You do not have access to create user')
+
+
+class ActivateCustomUserAccount(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        print("ActivateCustomUserAccount")
+        token = str(self.request.GET.get('token'))
+        print(token)
+        try:
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=['HS256'])
+            user = get_user_model().objects.get(id=payload['user_id'])
+            custom_user = CustomUser.objects.get(user=user)
+            if not custom_user.confirmed_at:
+                print("Confirmed at is None")
+                custom_user.confirmed_at = datetime.datetime.now()
+                custom_user.confirmation = True
+                custom_user.save()
+                serializer = CustomUserSerializer(custom_user)
+                return Response({'token': str(token), 'user': serializer.data}, status=status.HTTP_200_OK)
+            else:
+                serializer = CustomUserSerializer(custom_user)
+                return Response({'token': str(token), 'user': serializer.data}, status=status.HTTP_200_OK)
+        except jwt.ExpiredSignatureError as identifier:
+            return Response({'error': 'Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomUserDetails(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint for updating User
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = CustomUserSerializer
+    queryset = CustomUser.objects.all()
+
+
+
+from django.contrib.auth import authenticate
+class CustomUserPasswordUpdate(APIView):
+    """
+    Endpoint for updating User
+    """
+    authentication_classes = (JWTAuthentication,)
+    Permission_classes = (IsAuthenticated)
+    serializer_class = CustomUserSerializer
+    queryset = CustomUser.objects.all()
+    def post(self, request, *args, **kwargs):
+        print("CustomUserPasswordUpdate")
+        user = request.user
+        custom_user = CustomUser.objects.get(user=user)
+        print(user)
+        password = request.data.get('password')
+        print(password)
+        user.set_password(password)
+        custom_user.password = password
+        user.save()
+        print(user.password)
+        custom_user.save()
+        serializer = CustomUserSerializer(custom_user)
+        token = RefreshToken.for_user(user)
+        print(type(token))
+        print("logged in")
+        if user.first_name is None or user.last_name is None:
+            name = user.username
+        else:
+            name = user.first_name + ' ' + user.last_name
+        response = Response()
+        response.data = {
+            'refresh': str(token),
+            'access': str(token.access_token),
+            'username': user.username,
+            'name': name,
+            'user_id': user.id,
+            'status': 'success'
+        }
+        return response
+
+# Payment Method API
+
+
+class CashonPaymentMethodAPI(APIView):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = PaymentMethodSerializer
+    queryset = PaymentMethod.objects.all()
+
+    def get(self, request):
+        if request.user.is_admin:
+            if PaymentMethod.objects.exists():
+                payment = PaymentMethod.objects.first()
+                serializer = PaymentMethodSerializer(payment)
+                return Response(serializer.data)
+            else:
+                raise ValidationError("Payment Method not found")
+        else:
+            raise ValidationError("You are not authorized to access this page")
+
+    def post(self, request):
+        if request.user.is_admin:
+            serializer = PaymentMethodSerializer(data=request.data)
+            if serializer.is_valid():
+                try:
+                    payment = PaymentMethod.objects.first()
+                    serializer = PaymentMethodSerializer(
+                        payment, data=request.data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data)
+                    else:
+                        raise ValidationError(serializer.errors)
+                except PaymentMethod.DoesNotExist:
+                    serializer.save()
+                    return Response(serializer.data)
+            else:
+                raise ValidationError(serializer.errors)
+        else:
+            raise ValidationError("You are not authorized to access this page")
+
+    def put(self, request, format=None):
+        if request.user.is_admin:
+            if PaymentMethod.objects.exists():
+                payment = PaymentMethod.objects.first()
+                serializer = PaymentMethodSerializer(
+                    payment, data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data)
+                else:
+                    raise ValidationError(serializer.errors)
+            else:
+                raise ValidationError("Payment Method not found")
+        else:
+            raise ValidationError("You are not authorized to access this page")

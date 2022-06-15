@@ -140,10 +140,10 @@ WSGI_APPLICATION = 'oporajita_ecommerce.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'd2hp3b1fcpttc4',
-        'USER': 'phrofhfkpuzmcw',
-        'PASSWORD': 'a7f84253d743d27c51347b1c4cc9d8c4292783561f932744366306a0f8eceb3b',
-        'HOST': 'ec2-54-165-178-178.compute-1.amazonaws.com',
+        'NAME': 'ddoi0jj21ntmjn',
+        'USER': 'jgnpulnrfsvvgn',
+        'PASSWORD': '31039378f02b71760c5014b74d3817a55eec9623fadf93692e8aa6c595885d04',
+        'HOST': 'ec2-52-22-136-117.compute-1.amazonaws.com',
         'PORT': '5432',
     }
 }

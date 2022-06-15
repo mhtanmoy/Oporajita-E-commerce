@@ -12,7 +12,7 @@ from stdimage import StdImageField
 class CustomerProfile(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-    email = models.EmailField(max_length=55, unique=True)
+    email = models.EmailField(max_length=55, unique=True, null=True, blank=True)
     username = models.CharField(max_length=50, unique=True, null=True, blank=True)
     password = models.CharField(max_length=50, null=True, blank=True)
     GENDER_CHOICES = (

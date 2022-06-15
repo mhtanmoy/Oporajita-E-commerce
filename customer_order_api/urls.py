@@ -22,6 +22,8 @@ urlpatterns = [
           views.GetToken.as_view(), name='GetToken'),
      path('pathao/order/',
           views.CreatePathaoOrder.as_view(), name='CreatePathaoOrder'),
+     path('pathao/order/bulk/',
+          views.CreatePathaoBulkOrder.as_view(), name='CreatePathaoBulkOrder'),
      path('pathao/store/',
           views.StoreView.as_view(), name='StoreView'),
      path('pathao/city/',

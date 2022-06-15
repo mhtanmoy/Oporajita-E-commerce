@@ -205,7 +205,7 @@ class ProductPurchasedPaymentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('id',)
 class ProductPurchasedSerializer(WritableNestedModelSerializer):
-    product_purchased_item = ProductPurchasedItemSerializer(many=True)
+    product_purchased_item = ProductPurchasedItemSerializer(many=True, required=False)
     class Meta:
         model = ProductPurchased
         fields = '__all__'

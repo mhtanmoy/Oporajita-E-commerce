@@ -290,6 +290,18 @@ class Product(models.Model):
         null=True,
         blank=True
     )
+    cost_price = models.DecimalField(
+        decimal_places=2,
+        max_digits=10,
+        null=True,
+        blank=True
+    )
+    compare_at_price = models.DecimalField(
+        decimal_places=2,
+        max_digits=10,
+        null=True,
+        blank=True
+    )
     tax = models.ForeignKey('settings_api.TaxRate', on_delete=models.CASCADE,
                             related_name='product_tax_rate', null=True, blank=True)
     weight = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
@@ -432,8 +444,7 @@ class Inventory_transfer(models.Model):
     transfer_item = models.ManyToManyField(
         ProductSizeVariant,
         related_name='transfer_item',
-        blank=True,
-        null=True
+        blank=True
     )
     transfer_quantity = models.IntegerField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -471,10 +482,15 @@ class ProductPurchased(models.Model):
         null=True,
         blank=True
     )
+    order_total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    other_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    other_charge = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_due = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_payment = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_tax = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -484,7 +500,7 @@ class ProductPurchased(models.Model):
     #     super(ProductPurchased, self).save(*args, **kwargs)
 
     def __str__(self):
-        return self.po_number
+        return str(self.id)
 
 class ProductPurchasedItem(models.Model):
     id = models.AutoField(primary_key=True)
@@ -529,14 +545,13 @@ class ProductPurchasedItem(models.Model):
     )
     total_received_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_tax = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     # def save(self, *args, **kwargs):
     #     self.total_received_price = self.received_quantity * self.unit_price
 
         # super(ProductPurchasedItem, self).save(*args, **kwargs)
     def __str__(self):
-        return self.sku
+        return str(self.id)
 class ProductPurchasedPayment(models.Model):
     id = models.AutoField(primary_key=True)
     PAYMENT_METHOD_CHOICES = (
@@ -556,11 +571,13 @@ class ProductPurchasedPayment(models.Model):
     payment_date = models.DateField(null=True, blank=True)
     payment_method = models.CharField(max_length=50, choices=PAYMENT_METHOD_CHOICES, null=True, blank=True)
     reference = models.CharField(max_length=500, null=True, blank=True)
+    # amount_to_pay = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    due = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.reference
+        return str(self.id)
 
 #Customer Message
 class CustomerMessage(models.Model):
@@ -643,4 +660,5 @@ class CustomerMessage(models.Model):
 #     class Meta:
 #         model = Comment
 #         fields = ['name', 'subject', 'comment', 'rating']
+
 

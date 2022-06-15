@@ -104,7 +104,7 @@ class Order(models.Model):
         validators=[MinValueValidator(1)], blank=True, null=True)
     order_tracking_number = models.IntegerField(blank=True, null=True)
     serial = models.CharField(max_length=40, blank=True, null=True)
-    refund= models.BooleanField(default=False)
+
     delivery_address = models.ForeignKey(
         Address,
         related_name='shipping_address',
@@ -141,13 +141,13 @@ class Order(models.Model):
     has_discount = models.BooleanField(default=False)
 
     shipping_charge = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00)
+        max_digits=10, decimal_places=2, default=0.00, blank=True, null=True)
     other_charges = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00)
+        max_digits=10, decimal_places=2, default=0.00, blank=True, null=True)
     other_discount = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00)
+        max_digits=10, decimal_places=2, default=0.00, blank=True, null=True)
     promo_discount = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00)
+        max_digits=10, decimal_places=2, default=0.00, blank=True, null=True)
     total_tax = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00)
     order_total = models.DecimalField(
@@ -182,12 +182,20 @@ class Order(models.Model):
         max_length=50, choices=PAYMENT_METHOD_CHOICES, default='SELECT')
     payment_status = models.CharField(
         max_length=10, choices=PAYMENT_STATUS_CHOICES, default='PENDING')
-    reference = models.CharField(
-        max_length=20, choices=REFERENCE_CHOICES, null=True, blank=True)
+    reference = models.CharField(max_length=500, null=True, blank=True)
 
     amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0)
     #end payment
+    #pathao info
+    # pathao_merchant_order_id = models.CharField(max_length=100, null=True, blank=True)
+    pathao_city_id = models.IntegerField(null=True, blank=True)
+    pathao_zone_id = models.IntegerField(null=True, blank=True)
+    pathao_area_id = models.IntegerField(null=True, blank=True)
+    pathao_instruction = models.TextField(max_length=1000, null=True, blank=True)
+    pathao_item_description = models.TextField(max_length=200, null=True, blank=True)
+    pathao_status = models.BooleanField(default=False, null=True, blank=True)
+    #end pathao info
     created = models.DateTimeField(auto_now_add=True)  # purchase_date
     updated = models.DateTimeField(auto_now=True)
 
@@ -275,6 +283,9 @@ class OrderItem(models.Model):
         max_digits=8, decimal_places=2, null=True, blank=True)
     discount = models.DecimalField(
         max_digits=8, decimal_places=2, null=True, blank=True)
+    awaiting_stock = models.IntegerField(
+        default=0, null=True, blank=True
+    )
         
 
     @property

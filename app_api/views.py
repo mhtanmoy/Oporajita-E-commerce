@@ -9,12 +9,14 @@ from rest_framework.permissions import (
     IsAuthenticated,
 )
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from user_auth.permissions import IsAdmin
+from user_auth.permissions import HasPermission, IsAdmin
 from .serializers import *
 # Create your views here.
 
 
 class LiveChatAPI(APIView):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
     serializer_class = LiveChatSerializer
 
     def get(self, request):
@@ -24,7 +26,7 @@ class LiveChatAPI(APIView):
             return Response(serializer.data)
         else:
             raise ValidationError("Live Chat not found")
-    
+
     def post(self, request):
         serializer = LiveChatSerializer(data=request.data)
         if serializer.is_valid():
@@ -42,6 +44,7 @@ class LiveChatAPI(APIView):
                 return Response(serializer.data)
         else:
             raise ValidationError(serializer.errors)
+
     def put(self, request):
         queryset = LiveChat.objects.first()
         serializer = LiveChatSerializer(queryset, data=request.data)
@@ -50,6 +53,7 @@ class LiveChatAPI(APIView):
             return Response(serializer.data)
         else:
             raise ValidationError(serializer.errors)
+
     def delete(self, request):
         queryset = LiveChat.objects.first()
         queryset.delete()
@@ -57,6 +61,8 @@ class LiveChatAPI(APIView):
 
 
 class GoogleAnalyticAPI(APIView):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
     serializer_class = GoogleAnalyticSerializer
 
     def get(self, request):
@@ -99,7 +105,10 @@ class GoogleAnalyticAPI(APIView):
         queryset.delete()
         return Response(status=204)
 
+
 class GoogleADAPI(APIView):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
     serializer_class = GoogleADSerializer
 
     def get(self, request):
@@ -142,7 +151,10 @@ class GoogleADAPI(APIView):
         queryset.delete()
         return Response(status=204)
 
+
 class FacebookPixelAPI(APIView):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
     serializer_class = FacebookPixelSerializer
 
     def get(self, request):
@@ -185,7 +197,10 @@ class FacebookPixelAPI(APIView):
         queryset.delete()
         return Response(status=204)
 
+
 class OrderPlacedFacebookPixelAPI(APIView):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
     serializer_class = OrderPlacedFacebookPixelSerializer
 
     def get(self, request):
@@ -228,8 +243,14 @@ class OrderPlacedFacebookPixelAPI(APIView):
         queryset = OrderPlacedFacebookPixel.objects.first()
         queryset.delete()
         return Response(status=204)
+
+
 class PopupAPI(APIView):
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_store_popup_app'))
     serializer_class = PopupSerializer
+
     def get(self, request):
         if Popup.objects.exists():
             general_setting = Popup.objects.first()
@@ -255,6 +276,7 @@ class PopupAPI(APIView):
                 return Response(serializer.data)
         else:
             raise ValidationError(serializer.errors)
+
     def put(self, request):
         queryset = Popup.objects.first()
         serializer = PopupSerializer(queryset, data=request.data)
@@ -263,6 +285,7 @@ class PopupAPI(APIView):
             return Response(serializer.data)
         else:
             raise ValidationError(serializer.errors)
+
     def delete(self, request):
         queryset = Popup.objects.first()
         queryset.delete()
@@ -271,8 +294,9 @@ class PopupAPI(APIView):
 
 class NewsAPI(APIView):
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdmin,)
     serializer_class = NewsSerializer
+
     def get(self, request):
         if News.objects.exists():
             general_setting = News.objects.first()
@@ -298,6 +322,7 @@ class NewsAPI(APIView):
                 return Response(serializer.data)
         else:
             raise ValidationError(serializer.errors)
+
     def put(self, request):
         serializer = NewsSerializer()
         queryset = News.objects.first()
@@ -307,16 +332,20 @@ class NewsAPI(APIView):
             return Response(serializer.data)
         else:
             raise ValidationError(serializer.errors)
+
     def delete(self, request):
         queryset = News.objects.first()
         queryset.delete()
         return Response(status=204)
 
+
 class PromoCodeList(generics.ListCreateAPIView):
     """
     endpoint for viewing and creating promo code
     """
-    # permission_classes = (IsAuthenticated,IsAdmin,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_discount_app'))
     serializer_class = PromoCodeSerializer
 
     def get_queryset(self):
@@ -331,11 +360,14 @@ class PromoCodeList(generics.ListCreateAPIView):
             raise ValidationError(
                 'You do not have access to perform this action')
 
+
 class PromoCodeDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     endpoint for retrieving updating and deleting promo code
     """
-    # permission_classes = (IsAuthenticated, IsAdmin)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_discount_app'))
     serializer_class = PromoCodeSerializer
     queryset = PromoCode.objects.all()
 
@@ -344,7 +376,9 @@ class PromoCodeData(generics.RetrieveAPIView):
     """
     endpoint for to get data of promo code
     """
-    # permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    permission_classes = (
+        IsAuthenticated, HasPermission('manage_discount_app'))
     serializer_class = PromoCodeSerializer
     queryset = PromoCode.objects.all()
     lookup_fields = ('code')
@@ -357,4 +391,3 @@ class PromoCodeData(generics.RetrieveAPIView):
         except PromoCode.DoesNotExist:
             raise ValidationError('This is an invalid promo code')
         return queryset
-
