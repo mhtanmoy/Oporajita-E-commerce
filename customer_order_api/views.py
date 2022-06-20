@@ -1086,16 +1086,16 @@ class GetToken(APIView):
                 print("refresh_token", refresh_token)
             if token_type == "access":
                 data = {
-                    "client_id": "267",
-                    "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
-                    "username": "test@pathao.com",
-                    "password": "lovePathao",
+                    "client_id": "1158",
+                    "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
+                    "username": "aporajitatumi2@gmail.com",
+                    "password": "aporajitatumi88",
                     "grant_type": "password"
                 }
             elif token_type == "refresh":
                 data = {
-                    "client_id": "267",
-                    "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
+                    "client_id": "1158",
+                    "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
                     "refresh_token": refresh_token,
                     "grant_type": "refresh_token"
                 }
@@ -1104,7 +1104,7 @@ class GetToken(APIView):
                     'Please provide valid token type')
             print("json format data", data)
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/issue-token', data=data)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/issue-token', data=data)
             content = response.content
             response = json.loads(content)
             if token_type == "access":
@@ -1145,7 +1145,7 @@ class CreatePathaoOrder(APIView):
                 "grant_type": "password"
             }
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/issue-token', data=data)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/issue-token', data=data)
             content = response.content
             response = json.loads(content)
             access_token = response['access_token']
@@ -1165,7 +1165,7 @@ class CreatePathaoOrder(APIView):
             order_dict = {}
             if order is not None:
                 order_dict = {
-                    "store_id": 11028,
+                    "store_id": 61765,
                     "merchant_order_id": str(order.order_id),
                     "recipient_name": str(order.fullname),
                     "recipient_phone": str(order.phone),
@@ -1184,7 +1184,7 @@ class CreatePathaoOrder(APIView):
             hed = {'Authorization': 'Bearer ' + access_token}
             print("hed", hed)
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/orders', data=order_dict, headers=hed)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/orders', data=order_dict, headers=hed)
             if response.status_code == 200:
                 content = response.content
                 response = json.loads(content)
@@ -1211,14 +1211,14 @@ class CreatePathaoBulkOrder(APIView):
         user = self.request.user
         if user.is_admin or user.is_superuser:
             data = {
-                "client_id": "267",
-                "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
-                "username": "test@pathao.com",
-                "password": "lovePathao",
+                "client_id": "1158",
+                "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
+                "username": "aporajitatumi2@gmail.com",
+                "password": "aporajitatumi88",
                 "grant_type": "password"
             }
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/issue-token', data=data)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/issue-token', data=data)
             content = response.content
             response = json.loads(content)
             access_token = response['access_token']
@@ -1237,7 +1237,7 @@ class CreatePathaoBulkOrder(APIView):
                 if order_obj is not None:
                     order_dict = {
                         "item_type": 2,
-                        "store_id": 11028,
+                        "store_id": 61765,
                         "merchant_order_id": str(order_obj.order_id),
                         "recipient_name": str(order_obj.fullname),
                         "recipient_phone": str(order_obj.phone),
@@ -1256,7 +1256,7 @@ class CreatePathaoBulkOrder(APIView):
                     bulk_order['orders'].append(order_dict)
 
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/orders/bulk', data=json.dumps(bulk_order), headers=hed)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/orders/bulk', data=json.dumps(bulk_order), headers=hed)
             if response.status_code == 202 or response.status_code == 200:
                 content = response.content
                 response = json.loads(content)
@@ -1291,21 +1291,21 @@ class StoreView(APIView):
         user = self.request.user
         if user.is_admin or user.is_superuser:
             data = {
-                "client_id": "267",
-                "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
-                "username": "test@pathao.com",
-                "password": "lovePathao",
+                "client_id": "1158",
+                "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
+                "username": "aporajitatumi2@gmail.com",
+                "password": "aporajitatumi88",
                 "grant_type": "password"
             }
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/issue-token', data=data)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/issue-token', data=data)
             content = response.content
             response = json.loads(content)
             access_token = response['access_token']
             hed = {'Authorization': 'Bearer ' + access_token}
             print("hed", hed)
             response = requests.get(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/stores', headers=hed)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/stores', headers=hed)
             content = response.content
             response = json.loads(content)
             print("content", response)
@@ -1318,21 +1318,21 @@ class StoreView(APIView):
         user = self.request.user
         if user.is_admin or user.is_superuser:
             data = {
-                "client_id": "267",
-                "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
-                "username": "test@pathao.com",
-                "password": "lovePathao",
+                "client_id": "1158",
+                "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
+                "username": "aporajitatumi2@gmail.com",
+                "password": "aporajitatumi88",
                 "grant_type": "password"
             }
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/issue-token', data=data)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/issue-token', data=data)
             content = response.content
             response = json.loads(content)
             access_token = response['access_token']
             hed = {'Authorization': 'Bearer ' + access_token}
             print("hed", hed)
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/stores', data=request.data, headers=hed)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/stores', data=request.data, headers=hed)
             content = response.content
             response = json.loads(content)
             print("content", response)
@@ -1353,21 +1353,21 @@ class CityList(APIView):
         user = self.request.user
         if user.is_admin or user.is_superuser:
             data = {
-                "client_id": "267",
-                "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
-                "username": "test@pathao.com",
-                "password": "lovePathao",
+                "client_id": "1158",
+                "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
+                "username": "aporajitatumi2@gmail.com",
+                "password": "aporajitatumi88",
                 "grant_type": "password"
             }
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/issue-token', data=data)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/issue-token', data=data)
             content = response.content
             response = json.loads(content)
             access_token = response['access_token']
             hed = {'Authorization': 'Bearer ' + access_token}
             print("hed", hed)
             response = requests.get(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/countries/1/city-list', headers=hed)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/countries/1/city-list', headers=hed)
             content = response.content
             response = json.loads(content)
             print("content", response)
@@ -1394,14 +1394,14 @@ class ZoneList(APIView):
                 raise ValidationError(
                     'Please provide valid city')
             data = {
-                "client_id": "267",
-                "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
-                "username": "test@pathao.com",
-                "password": "lovePathao",
+                "client_id": "1158",
+                "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
+                "username": "aporajitatumi2@gmail.com",
+                "password": "aporajitatumi88",
                 "grant_type": "password"
             }
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/issue-token', data=data)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/issue-token', data=data)
             content = response.content
             response = json.loads(content)
             access_token = response['access_token']
@@ -1410,7 +1410,7 @@ class ZoneList(APIView):
 
             if city_id is not None:
                 response = requests.get(
-                    'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/cities/'+str(city_id)+'/zone-list', headers=hed)
+                    'https://api-hermes.pathaointernal.com/aladdin/api/v1/cities/'+str(city_id)+'/zone-list', headers=hed)
                 content = response.content
                 response = json.loads(content)
                 print("content", response)
@@ -1437,14 +1437,14 @@ class AreaList(APIView):
                 raise ValidationError(
                     'Please provide valid zone')
             data = {
-                "client_id": "267",
-                "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
-                "username": "test@pathao.com",
-                "password": "lovePathao",
+                "client_id": "1158",
+                "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
+                "username": "aporajitatumi2@gmail.com",
+                "password": "aporajitatumi88",
                 "grant_type": "password"
             }
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/issue-token', data=data)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/issue-token', data=data)
             content = response.content
             response = json.loads(content)
             access_token = response['access_token']
@@ -1452,7 +1452,7 @@ class AreaList(APIView):
             print("hed", hed)
             if zone_id is not None:
                 response = requests.get(
-                    'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/zones/'+str(zone_id)+'/area-list', headers=hed)
+                    'https://api-hermes.pathaointernal.com/aladdin/api/v1/zones/'+str(zone_id)+'/area-list', headers=hed)
                 content = response.content
                 response = json.loads(content)
                 print("content", response)
@@ -1473,21 +1473,21 @@ class PriceCalculation(APIView):
         user = self.request.user
         if user.is_admin or user.is_superuser:
             data = {
-                "client_id": "267",
-                "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
-                "username": "test@pathao.com",
-                "password": "lovePathao",
+                "client_id": "1158",
+                "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
+                "username": "aporajitatumi2@gmail.com",
+                "password": "aporajitatumi88",
                 "grant_type": "password"
             }
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/issue-token', data=data)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/issue-token', data=data)
             content = response.content
             response = json.loads(content)
             access_token = response['access_token']
             hed = {'Authorization': 'Bearer ' + access_token}
             print("hed", hed)
             response = requests.post(
-                'https://hermes-api.p-stageenv.xyz/aladdin/api/v1/merchant/price-plan', data=request.data, headers=hed)
+                'https://api-hermes.pathaointernal.com/aladdin/api/v1/merchant/price-plan', data=request.data, headers=hed)
             content = response.content
             response = json.loads(content)
             print("content", response)
