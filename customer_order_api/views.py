@@ -1138,10 +1138,10 @@ class CreatePathaoOrder(APIView):
         user = self.request.user
         if user.is_admin or user.is_superuser:
             data = {
-                "client_id": "267",
-                "client_secret": "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
-                "username": "test@pathao.com",
-                "password": "lovePathao",
+                "client_id": "1158",
+                "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
+                "username": "aporajitatumi2@gmail.com",
+                "password": "shatabdi8822445588",
                 "grant_type": "password"
             }
             response = requests.post(
