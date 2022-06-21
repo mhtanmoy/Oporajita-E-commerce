@@ -1141,7 +1141,7 @@ class CreatePathaoOrder(APIView):
                 "client_id": "1158",
                 "client_secret": "GTp6wcdMzCdKAuOqnTCUmdMkMYU7HUDFKdQC3T2K",
                 "username": "aporajitatumi2@gmail.com",
-                "password": "shatabdi8822445588",
+                "password": "aporajitatumi88",
                 "grant_type": "password"
             }
             response = requests.post(
