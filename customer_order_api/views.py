@@ -29,6 +29,7 @@ from settings_api.serializers import DeliveryAreaSerializer
 from user_auth.models import User
 from user_auth.permissions import HasPermission, IsAdmin
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from .serializers import *
 
 
@@ -264,37 +265,59 @@ class OrderCreate(generics.CreateAPIView):
                     username = self.request.data['phone']
                     email = None
                     print("Phone is not None", username)
-                    first_name = self.request.data['fullname'].split(' ')[0]
-                    last_name = self.request.data['fullname'].split(' ')[1]
+
                     try:
+                        
+                        first_name = self.request.data['fullname'].split(' ')[0]
+                        last_name = self.request.data['fullname'].split(' ')[1]
                         username = self.request.data['phone']
                         email = self.request.data['email']
+                        print("1")
                     except:
                         username = self.request.data['email'].split('@')[0]
                         email = self.request.data['email']
+                        print("2")
+
                     if get_user_model().objects.filter(username=username).exists():
+                        print("3")
                         return Response(
                             {'message': 'User already exists'})
-                    if get_user_model().objects.filter(email=email).exists():
-                        return Response(
-                            {'message': 'Email already exists'})
                     password = BaseUserManager().make_random_password()
+                    print("4")
                     print(username, email, password, first_name,
                           last_name, self.request.data['phone'])
-                    new_user = get_user_model().objects.create_user(username=username, email=email, password=password, first_name=first_name, last_name=last_name,
-                                                                    phone=self.request.data['phone'], is_admin=False, is_customer=True, is_active=True, is_staff=False, is_superuser=False)
-                    new_user.save()
+                    
+                    new_user = get_user_model().objects.create_user(username=username, email=email, password=password, first_name=first_name, last_name=last_name, phone=self.request.data['phone'], is_admin=False, is_customer=True, is_active=True, is_staff=False, is_superuser=False)
+                    # new_user.save()
+                    # print(new_user1)
+                    print(new_user.first_name)
+                    print(new_user.email)
+                    print(new_user.phone)
+                    # new_user = User.objects.filter(phone=new_user1.phone)
+                    # print(new_user)
+
+                    
 
                     if new_user is not None:
-                        customer_ins = CustomerProfile.objects.create(
-                            user=new_user,
-                            phone=self.request.data['phone'],
-                            first_name=first_name,
-                            last_name=last_name,
-                            email=email,
-                            address=self.request.data['address'],
-                        )
-                        customer_ins.save()
+                        print("5")
+                        try:
+                            customer_ins = CustomerProfile.objects.create(
+                                user=new_user,
+                                phone=self.request.data['phone'],
+                                first_name=first_name,
+                                last_name=last_name,
+                                email=email,
+                                address=self.request.data['address'],
+                            )
+                        except Exception as e:
+                            customer_ins = CustomerProfile.objects.create(
+                                user=new_user,
+                                phone=self.request.data['phone'],
+                                first_name=first_name,
+                                last_name=last_name,
+                                address=self.request.data['address'],
+                            )
+                        print(customer_ins)
 
                 print("User Instance ", new_user)
             print("Ordered By ", ordered_by)
