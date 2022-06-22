@@ -1250,10 +1250,12 @@ class CreatePathaoBulkOrder(APIView):
             bulk_order = {
                 "orders": []
             }
-            for order in request.data:
-                order_id = order['order_id']
+            
+            for order in request.data["orders"]:
+                print(order["order_id"])
+                order_id = order["order_id"]
                 try:
-                    order_obj = Order.objects.get(id=order_id)
+                    order_obj = Order.objects.get(order_id=order_id)
                 except:
                     raise ValidationError(
                         'Order does not exist')
@@ -1284,10 +1286,10 @@ class CreatePathaoBulkOrder(APIView):
                 content = response.content
                 response = json.loads(content)
                 print("response", response)
-                for order in request.data:
-                    order_id = order['order_id']
+                for order in request.data["orders"]:
+                    order_id = order["order_id"]
                     try:
-                        order_obj = Order.objects.get(id=order_id)
+                        order_obj = Order.objects.get(order_id=order_id)
                     except:
                         raise ValidationError(
                             'Order does not exist')
