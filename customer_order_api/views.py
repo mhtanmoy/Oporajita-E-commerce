@@ -601,8 +601,13 @@ class OrderCreate(generics.CreateAPIView):
                     serializer = OrderSerializer(order)
                     try:
                         if self.request.data['is_sms_send'] == True:
+                            try:
+                                pdf_url = self.request.data['pdf_url']
+                                print(pdf_url)
+                            except:
+                                print("pdf_url missing")
                             body = "Dear " + customer_ins.first_name + ", Your order has been placed successfully. Your order number is " + str(
-                                order_id) + ". Your order total is " + str(grand_total) + ". Thank you for shopping with us."
+                                order_id) + ". Your order total is " + str(grand_total) +". Order Invoice url is "+ pdf_url +". Thank you for shopping with us."
                             print("body", body)
                             message_detail = {
                                 "api_key": "KEY-upxs2en3c33csakv1kcwzlu0rr7rb41n",
