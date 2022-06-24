@@ -1,0 +1,29 @@
+.register-user {
+    display: flex;
+    /* border: 1px solid red; */
+    justify-content: space-between;
+    align-items: center;
+}
+
+.main-outlet {
+    width: 20%;
+}
+
+.register {
+    width: 80%;
+    /* border: 1px solid red; */
+    /* height: 100px; */
+}
+
+.register ul {
+    display: flex;
+    justify-content: space-around;
+}
+
+.register ul li {
+    border: 1px solid rgb(215, 190, 190);
+    padding: 5px;
+    background: #6A5FAC;
+    list-style: none;
+    color: white;
+}
