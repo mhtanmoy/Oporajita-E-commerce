@@ -601,7 +601,9 @@ class OrderCreate(generics.CreateAPIView):
                     serializer = OrderSerializer(order)
                     try:
                         if self.request.data['is_sms_send'] == True:
-                            pdf_url = "https://whimsical-beignet-ec43bb.netlify.app/admin/manual_orders/pdf?id=" + order_id
+                            orderID1= str(order.id)
+                            print(orderID1)
+                            pdf_url = "https://whimsical-beignet-ec43bb.netlify.app/admin/manual_orders/pdf?id=" + orderID1
                             print(pdf_url)
                             body = "Dear " + customer_ins.first_name + ", Your order has been placed successfully. Your order number is " + str(
                                 order_id) + ". Your order total is " + str(grand_total) +". Order Invoice url is "+ pdf_url +". Thank you for shopping with us."
