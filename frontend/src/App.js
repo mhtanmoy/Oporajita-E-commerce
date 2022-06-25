@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Route, HashRouter as Router } from 'react-router-dom';
 import axios from 'axios';
 
 import Navbar from './components/layout/navigation/Navbar';
@@ -128,7 +128,7 @@ function App() {
     console.log('verifying token');
     try {
       const response = await axios.post(
-        'https://aporajitatumi.somikoron.com/auth/api/token/verify/',
+        'http://127.0.0.1:8000/auth/api/token/verify/',
         {
           token: localStorage.token,
         }
@@ -147,34 +147,27 @@ function App() {
       verifyToken();
     }
   }, []);
-  if(location.pathname==="/signup"){
+  if(location.pathname==="/admin/manual_orders/pdf"){
     console.log("dot")
-    return <SignUpPage setLoginStatus={setLoginStatus} />;
   }
   else if (!localStorage.token) {
     return <LogInPage setLoginStatus={setLoginStatus} />;
   }
 
   return (
-    <>
+    <Router>
       <Sidebar setLoginStatus={setLoginStatus} />
       <div className="App" id="content">
         <Navbar setLoginStatus={setLoginStatus} />
-        
+        <Route path="/create_order/pdf" exact component={pdf} />
         <div id="page-container-parent">
-          <Switch>
+          
             <Route path="/test" exact component={TestPage} />
             <Route
               path="/login"
               exact
               component={LogInPage}
               setLoginStatus={setLoginStatus}
-            />
-            <Route
-              path="/signup"
-              exact
-              component={SignUpPage}
-             
             />
             <Route path="/" exact component={DashboardPage} />
             <Route path="/admin/index" exact component={DashboardPage} />
@@ -480,10 +473,10 @@ function App() {
               component={ChangePasswordPage}
             />
             <Route component={NotFoundPage} />
-          </Switch>
+        
         </div>
       </div>
-    </>
+    </Router>
   );
 }
 

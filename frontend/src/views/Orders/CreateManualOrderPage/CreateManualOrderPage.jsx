@@ -642,7 +642,7 @@ function CreateNewManualOrderPage() {
   let handleCoupon = (coupon) => {
     const token = window.localStorage.getItem("token");
 
-    fetch('https://aporajitatumi.somikoron.com/api/v1/app/promocodes/', {
+    fetch('http://127.0.0.1:8000/api/v1/app/promocodes/', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

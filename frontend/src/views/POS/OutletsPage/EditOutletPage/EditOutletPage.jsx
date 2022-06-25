@@ -215,7 +215,7 @@ function EditOutletPage() {
                   </label>
                   <input
                     type="number"
-                    
+                    className="form-control"
                     min="0"
                     className="form-control"
                     {...register('postal_code')}

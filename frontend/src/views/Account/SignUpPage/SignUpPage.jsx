@@ -82,7 +82,7 @@ function SignUpPage() {
                 </label>
                 <input
                   type="password"
-                 
+                  className="form-control"
                   {...register('confirm_password', {
                     required: 'You must specify a confirm password',
                     validate: (value) =>

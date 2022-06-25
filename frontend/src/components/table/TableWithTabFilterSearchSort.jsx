@@ -100,7 +100,6 @@ function TableWithTabFilterSearchSort({
   }, []);
 
   return (
-    <div>
     <div className="table-container">
       <div className="table-tab-button-container">
         {tableTab.map((tab, index) => {
@@ -211,7 +210,7 @@ function TableWithTabFilterSearchSort({
                 />
               )}
             </div>
-        
+        )}
       </div>
       {/* <pre>
         <code>

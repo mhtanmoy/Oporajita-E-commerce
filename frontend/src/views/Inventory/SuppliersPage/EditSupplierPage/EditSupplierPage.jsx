@@ -9,7 +9,7 @@ function EditSupplierPage() {
   const [taxOptions, setTaxOptions] = useState([]);
   const taxRateData = taxOptions;
   //axios
-  axios.defaults.baseURL = 'https://aporajitatumi.somikoron.com/';
+  axios.defaults.baseURL = 'http://localhost:8000/';
   axios.defaults.xsrfHeaderName = 'X-CSRFTOKEN';
   axios.defaults.xsrfCookieName = 'csrftoken';
   axios.defaults.withCredentials = true;
@@ -305,7 +305,7 @@ function EditSupplierPage() {
                   </label>
                   <input
                     type="number"
-                    
+                    className="form-control"
                     min="0"
                     className="form-control"
                     {...register('supplier_postal_code')}

@@ -113,7 +113,6 @@ function ProductsInventoryTable({
   }, []);
 
   return (
-    <div>
     <div className="table-container">
       <GlobalFilter filter={globalFilter} setFilter={setGlobalFilter} />
       <div className="table-search-container"></div>
@@ -271,7 +270,7 @@ function ProductsInventoryTable({
                 />
               )}
             </div>
-       
+        )}
       </div>
       <div
         className="modal fade"
