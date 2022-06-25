@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 function AddNewUserPage() {
   //axios
-  axios.defaults = 'http://aporajitatumi.somikoron.com/';
+  axios.defaults = 'https://aporajitatumi.somikoron.com/';
 
   //states
   const [roleType, setRoleType] = useState({});

@@ -85,7 +85,7 @@ function EditCouponPage() {
   };
   useEffect(() => {
     const token = window.localStorage.getItem("token");
-    fetch('http://aporajitatumi.somikoron.com/api/v1/inventory/products/', {
+    fetch('https://aporajitatumi.somikoron.com/api/v1/inventory/products/', {
       method: 'GET',
       headers: new Headers({
         'Authorization': 'Bearer ' + token,
@@ -99,7 +99,7 @@ function EditCouponPage() {
       })
 
 
-    fetch('http://aporajitatumi.somikoron.com/api/v1/inventory/product-categories/', {
+    fetch('https://aporajitatumi.somikoron.com/api/v1/inventory/product-categories/', {
       method: 'GET',
       headers: new Headers({
         'Authorization': 'Bearer ' + token,

@@ -9,7 +9,7 @@ function EditSupplierPage() {
   const [taxOptions, setTaxOptions] = useState([]);
   const taxRateData = taxOptions;
   //axios
-  axios.defaults.baseURL = 'http://aporajitatumi.somikoron.com/';
+  axios.defaults.baseURL = 'https://aporajitatumi.somikoron.com/';
   axios.defaults.xsrfHeaderName = 'X-CSRFTOKEN';
   axios.defaults.xsrfCookieName = 'csrftoken';
   axios.defaults.withCredentials = true;

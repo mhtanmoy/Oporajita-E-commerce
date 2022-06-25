@@ -128,7 +128,7 @@ function App() {
     console.log('verifying token');
     try {
       const response = await axios.post(
-        'http://aporajitatumi.somikoron.com/auth/api/token/verify/',
+        'https://aporajitatumi.somikoron.com/auth/api/token/verify/',
         {
           token: localStorage.token,
         }

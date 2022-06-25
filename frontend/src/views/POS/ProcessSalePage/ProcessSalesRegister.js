@@ -26,7 +26,7 @@ const ProcessSalesRegister = () => {
 
     async function fetchRegisterUser() {
        
-        const response = await axiosInstance('http://aporajitatumi.somikoron.com/api/v1/pos/registers/',config);
+        const response = await axiosInstance('https://aporajitatumi.somikoron.com/api/v1/pos/registers/',config);
         // waits until the request completes...
         setData(response.data)
     }
