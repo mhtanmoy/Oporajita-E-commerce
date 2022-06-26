@@ -294,7 +294,7 @@ function ShippingMethodsPage() {
             <div className="col-xs-12 col-md-2">
               <img
                 width="100"
-                src="/static/assets/images/free_shipping.png"
+                src="/assets/images/free_shipping.png"
                 alt="delivery"
               />
             </div>
@@ -369,7 +369,7 @@ function ShippingMethodsPage() {
             <div className="col-xs-12 col-md-2">
               <img
                 width="100"
-                src="/static/assets/images/store_shipping.png"
+                src="/assets/images/store_shipping.png"
                 alt="delivery"
               />
             </div>
@@ -444,7 +444,7 @@ function ShippingMethodsPage() {
             <div className="col-xs-12 col-md-2">
               <img
                 width="100"
-                src="/static/assets/images/standard_shipping.png"
+                src="/assets/images/standard_shipping.png"
                 alt="delivery"
               />
             </div>

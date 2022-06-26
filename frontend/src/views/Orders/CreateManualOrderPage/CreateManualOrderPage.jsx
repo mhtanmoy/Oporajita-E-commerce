@@ -21,6 +21,7 @@ function CreateNewManualOrderPage() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [RegionList, setRegionList] = useState([]);
+  const [RegionList1, setRegionList1] = useState('');
   const [preDiscountAmount, setPreDiscountAmount] = useState(0.0);
   const [preManualDiscountAmount, setPreManualDiscountAmount] = useState(0.0);
   //selection states
@@ -187,11 +188,14 @@ function CreateNewManualOrderPage() {
 
 
   const calculateshippingAmount = (regionList) => {
+    console.log("Tanm")
+    console.log(regionList)
+    setRegionList1(regionList.id)
     let shippingrate;
     shippingrate = cartInformation.subtotal - cartInformation.discountTotal + parseFloat(regionList.region_price)
     let shippingPrice = parseFloat(regionList.region_price)
     console.log({ shippingrate }, { shippingPrice });
-
+    
     setCartInformation({
       ...cartInformation,
       shippingTotal: shippingPrice,
@@ -320,6 +324,18 @@ function CreateNewManualOrderPage() {
   };
   const removeFromCart = (toRemove) => {
     const filtered = addedProductList.filter((_, index) => index !== toRemove);
+    const filtered1 = addedProductList.filter((_, index) => index === toRemove);
+    console.log(filtered1[0].price);
+    console.log(cartInformation.total);
+    let updateprice1= cartInformation.total - (filtered1[0].price* filtered1[0].addedQuantity)
+    let updateprice2= cartInformation.subtotal - (filtered1[0].price* filtered1[0].addedQuantity)
+    setCartInformation({
+      ...cartInformation,
+      subtotal: updateprice2,
+      total: updateprice1
+    })
+    console.log(cartInformation)
+
     setAddedProductList(filtered);
   };
 
@@ -349,10 +365,11 @@ function CreateNewManualOrderPage() {
     },
   };
   async function sendData(data) {
+    console.log(RegionList1)
     console.log(data)
     setIsLoading(true);
     data.value = cartInformation.shippingPrice;
-    data.delivery_area_id = RegionList.id;
+    data.delivery_area_id = RegionList1;
     data.customer = selectedCustomer.id;
     data.email = selectedCustomer.email;
     data.phone = selectedCustomer.phone;
@@ -366,7 +383,7 @@ function CreateNewManualOrderPage() {
     data.ordered_by = JSON.parse(localStorage.user).username;
     data.order_note = selectedCustomer.customerNote;
     data.currency = 'BDT';
-    data.shipping_charge = cartInformation.shippingPrice;
+    data.shipping_charge = cartInformation.shippingTotal;
     data.has_discount = data.other_discount !== '' ? true : false;
     data.other_discount =
       data.other_discount !== '' ? data.other_discount : null;

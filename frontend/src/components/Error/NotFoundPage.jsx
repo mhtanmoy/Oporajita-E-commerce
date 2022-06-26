@@ -6,7 +6,7 @@ export default function NotFoundPage() {
       <div className="panel-container">
         <div className="page-404-container">
           <img
-            src="/static/assets/svg/warning.svg"
+            src="/assets/svg/warning.svg"
             alt="404"
             className="page-404-img"
           />

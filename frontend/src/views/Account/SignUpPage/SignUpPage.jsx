@@ -116,7 +116,7 @@ function SignUpPage() {
           </div>
           <div className="col-6 d-flex align-items-center">
             <img
-              src="/static/assets/images/big-logo.png"
+              src="/assets/images/big-logo.png"
               className="signup-company-logo"
             />
             {/* <h2 className="company-name black-font">Aporajita Tumi</h2> */}

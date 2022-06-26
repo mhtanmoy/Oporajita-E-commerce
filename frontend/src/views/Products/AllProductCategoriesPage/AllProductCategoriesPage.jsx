@@ -211,12 +211,12 @@ function AllProductCategoriesPage() {
                                     {column.isSorted ? (
                                       column.isSortedDesc ? (
                                         <img
-                                          src="/static/assets/icons/sort_both.png"
+                                          src="/assets/icons/sort_both.png"
                                           className="table-sort-icon"
                                         />
                                       ) : (
                                         <img
-                                          src="/static/assets/icons/sort_both.png"
+                                          src="/assets/icons/sort_both.png"
                                           className="table-sort-icon"
                                         />
                                       )
@@ -224,7 +224,7 @@ function AllProductCategoriesPage() {
                                       column.disableSortBy !== true &&
                                       column.id !== 'selection' && (
                                         <img
-                                          src="/static/assets/icons/sort_both.png"
+                                          src="/assets/icons/sort_both.png"
                                           className="table-sort-icon"
                                         />
                                       )
