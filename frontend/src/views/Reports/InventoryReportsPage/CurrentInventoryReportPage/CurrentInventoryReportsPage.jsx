@@ -245,12 +245,12 @@ function CurrentInventoryReportsPage() {
                                   {column.isSorted ? (
                                     column.isSortedDesc ? (
                                       <img
-                                        src="/assets/icons/sort_both.png"
+                                        src="/static/assets/icons/sort_both.png"
                                         className="table-sort-icon"
                                       />
                                     ) : (
                                       <img
-                                        src="/assets/icons/sort_both.png"
+                                        src="/static/assets/icons/sort_both.png"
                                         className="table-sort-icon"
                                       />
                                     )
@@ -258,7 +258,7 @@ function CurrentInventoryReportsPage() {
                                     column.disableSortBy !== true &&
                                     column.id !== 'selection' && (
                                       <img
-                                        src="/assets/icons/sort_both.png"
+                                        src="/static/assets/icons/sort_both.png"
                                         className="table-sort-icon"
                                       />
                                     )

@@ -247,9 +247,9 @@ function AllCustomersPageTable({ tableHeader, tableData, tableFor }) {
                 />
               )}
             </div>
-        )}
+       
       </div>
-    </div>
+    
   );
 }
 

@@ -420,9 +420,9 @@ function BulkUpdateProductsTable({
                 />
               )}
             </div>
-        )}
+    
       </div>
-    </div>
+ 
   );
 }
 

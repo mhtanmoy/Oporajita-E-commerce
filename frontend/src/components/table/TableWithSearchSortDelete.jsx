@@ -223,7 +223,7 @@ function TableWithSearchSortDelete({ tableHeader, tableData, tableFor }) {
                 />
               )}
             </div>
-        )}
+        
         {/* <span>
             | Go to page:{' '}
             <input
@@ -237,7 +237,7 @@ function TableWithSearchSortDelete({ tableHeader, tableData, tableFor }) {
             />
           </span>{' '} */}
       </div>
-    </div>
+ 
   );
 }
 

@@ -129,9 +129,7 @@ function CreateNewManualOrderPage() {
         parseFloat(cartInformation.subtotal) + parseFloat(productTotal)
       ).toFixed(2);
       //calculate total price
-      const newTotal = parseFloat(
-        newSubtotal
-      ).toFixed(2);
+      const newTotal = (parseFloat(newSubtotal)+ parseFloat(cartInformation.shippingTotal) - parseFloat(cartInformation.discountTotal)).toFixed(2);
       console.log({ newTotal });
       setCartInformation({
         ...cartInformation,
@@ -161,7 +159,7 @@ function CreateNewManualOrderPage() {
       newSubtotal += parseFloat(addedProductList[i].totalPrice);
     }
     newSubtotal = parseFloat(newSubtotal).toFixed(2);
-    const newTotal = parseFloat(newSubtotal).toFixed(2);
+    const newTotal = (parseFloat(newSubtotal)+ parseFloat(cartInformation.shippingTotal) - parseFloat(cartInformation.discountTotal)).toFixed(2);
     setCartInformation({
       ...cartInformation,
       subtotal: newSubtotal,

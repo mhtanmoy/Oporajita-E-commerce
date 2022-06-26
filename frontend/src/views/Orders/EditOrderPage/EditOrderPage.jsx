@@ -288,7 +288,9 @@ function EditOrderPage() {
   
     try {
       const response = await axiosInstance.get('api/v1/inventory/products/',config);
+
       setProductList(response.data);
+      
       setIsLoading(false);
       console.log(response.data);
     } catch (err) {
@@ -609,7 +611,7 @@ function EditOrderPage() {
                 </div>
                 <div>
                   <p className="m-0">Name: {data.fullname}</p>
-                  <p>Address: {data.delivery_address}</p>
+                  <p>Address: {data.address}</p>
                 </div>
               </section>
             </div>

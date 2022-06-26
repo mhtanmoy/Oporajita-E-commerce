@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Route, HashRouter as Router } from 'react-router-dom';
 import axios from 'axios';
 
 import Navbar from './components/layout/navigation/Navbar';
@@ -155,13 +155,13 @@ function App() {
   }
 
   return (
-    <>
+    <Router>
       <Sidebar setLoginStatus={setLoginStatus} />
       <div className="App" id="content">
         <Navbar setLoginStatus={setLoginStatus} />
         <Route path="/create_order/pdf" exact component={pdf} />
         <div id="page-container-parent">
-          <Switch>
+          
             <Route path="/test" exact component={TestPage} />
             <Route
               path="/login"
@@ -472,11 +472,11 @@ function App() {
               path="/admin/settings/1/edit-password"
               component={ChangePasswordPage}
             />
-            <Route component={NotFoundPage} />
-          </Switch>
+            
+        
         </div>
       </div>
-    </>
+    </Router>
   );
 }
 
