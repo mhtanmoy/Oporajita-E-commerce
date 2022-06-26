@@ -284,9 +284,9 @@ function AllProductsTable({ tableHeader, tableData, tableFor }) {
                 />
               )}
             </div>
-        )}
+      
       </div>
-    </div>
+   
   );
 }
 

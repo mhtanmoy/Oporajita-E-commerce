@@ -232,7 +232,7 @@ function CreateNewLocationPage() {
                   </label>
                   <input
                     type="number"
-                    className="form-control"
+                  
                     min="0"
                     className="form-control"
                     {...register('inventory_location_postal_code')}

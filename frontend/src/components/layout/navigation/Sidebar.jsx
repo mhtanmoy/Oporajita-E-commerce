@@ -26,7 +26,7 @@ function Sidebar({ setLoginStatus }) {
   return (
     <nav id="sidebar">
       {/* <div className="sidebar-header">
-        <img src="/assets/images/logo.png" />
+        <img src="/static/assets/images/logo.png" />
       </div> */}
       <div className="sidebar-header">
         <p className="sidebar-text-logo">Aporajita Tumi</p>

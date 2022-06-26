@@ -210,23 +210,10 @@ function TableWithTabFilterSearchSort({
                 />
               )}
             </div>
-        )}
+ 
       </div>
-      {/* <pre>
-        <code>
-          {JSON.stringify(
-            {
-              selectedRowIds: selectedRowIds,
-              'selectedFlatRows[].original': selectedFlatRows.map(
-                (d) => d.original
-              ),
-            },
-            null,
-            2
-          )}
-        </code>
-      </pre> */}
-    </div>
+     
+
   );
 }
 

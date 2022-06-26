@@ -239,7 +239,7 @@ function BulkInventoryEntryTableCopy({
                     <span className="input-group-btn">
                       <button
                         className="btn btn-default radious-top-left-0 radious-bottom-left-0"
-                        type="button"
+                        
                         type="submit"
                         onClick={() => {
                           setApplyAll(true);
