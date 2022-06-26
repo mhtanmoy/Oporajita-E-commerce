@@ -1,0 +1,39 @@
+.modal {
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  z-index: 100;
+  overflow-x: hidden;
+  background-color: rgba(31, 32, 41, 0.75);
+}
+
+.modal-body {
+  background-color: white;
+  align-self: center;
+  position: relative;
+  position: fixed;
+  height: 80%;
+  width: 60%;
+  padding: 30px;
+  overflow-y: scroll;
+}
+
+.nav-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.button-section {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.warper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

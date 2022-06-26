@@ -1,1 +1,0 @@
-web: gunicorn oporajita_ecommerce.wsgi --log-file -

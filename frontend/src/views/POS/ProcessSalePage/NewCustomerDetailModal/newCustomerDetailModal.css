@@ -1,0 +1,29 @@
+.customerDetailModal {
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 88vw;
+  z-index: 100;
+  overflow-x: hidden;
+  background-color: rgba(31, 32, 41, 0.75);
+}
+
+.customerDetailModal-body {
+  background-color: white;
+  align-self: center;
+  position: relative;
+  height: 60%;
+  width: 70%;
+  padding: 30px;
+}
+
+.nav-section {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* .customerDetailModal-main-body {
+  display: flex;
+} */
