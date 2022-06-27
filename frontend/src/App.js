@@ -128,7 +128,7 @@ function App() {
     console.log('verifying token');
     try {
       const response = await axios.post(
-        'http://127.0.0.1:8000/auth/api/token/verify/',
+        'https://oporajita1.herokuapp.com/auth/api/token/verify/',
         {
           token: localStorage.token,
         }

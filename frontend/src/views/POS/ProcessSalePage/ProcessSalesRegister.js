@@ -26,7 +26,7 @@ const ProcessSalesRegister = () => {
 
     async function fetchRegisterUser() {
        
-        const response = await axiosInstance('http://127.0.0.1:8000/api/v1/pos/registers/',config);
+        const response = await axiosInstance('https://oporajita1.herokuapp.com/api/v1/pos/registers/',config);
         // waits until the request completes...
         setData(response.data)
     }
