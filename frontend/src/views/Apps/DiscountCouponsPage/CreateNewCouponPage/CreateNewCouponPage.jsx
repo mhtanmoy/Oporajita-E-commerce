@@ -68,7 +68,7 @@ function CreateNewCouponPage() {
   const [categoriesList, setCategoriesLIst] = useState([])
   useEffect(() => {
     const token = window.localStorage.getItem("token");
-    fetch('http://127.0.0.1:8000/api/v1/inventory/products/', {
+    fetch('https://oporajita1.herokuapp.com/api/v1/inventory/products/', {
       method: 'GET',
       headers: new Headers({
         'Authorization': 'Bearer ' + token,
@@ -82,7 +82,7 @@ function CreateNewCouponPage() {
       })
 
 
-    fetch('http://127.0.0.1:8000/api/v1/inventory/product-categories/', {
+    fetch('https://oporajita1.herokuapp.com/api/v1/inventory/product-categories/', {
       method: 'GET',
       headers: new Headers({
         'Authorization': 'Bearer ' + token,
