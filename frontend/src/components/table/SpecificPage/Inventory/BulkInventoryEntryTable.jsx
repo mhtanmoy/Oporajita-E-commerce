@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
 
-import { useForm, useFieldArray } from 'react-hook-form';
-import { useTable, usePagination, useRowSelect } from 'react-table';
-import axiosInstance from '../../../../helpers/axios';
-import { errorToast, successToast } from '../../../../helpers/toast.js';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { FaSearch } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { usePagination, useRowSelect, useTable } from 'react-table';
+import axiosInstance from '../../../../helpers/axios';
+import { errorToast } from '../../../../helpers/toast.js';
 import Pagination from '../../../others/pagination';
 
 function BulkInventoryEntryTable({
@@ -33,7 +33,15 @@ function BulkInventoryEntryTable({
     control,
     name: 'variants',
   });
-
+  const sortVar = () =>{
+    let sortedVar = [];
+    // console.log({variantsNot:variants});
+     variants.sort((a,b)=>{
+      return parseInt(a.value) - parseInt(b.value)
+    });
+    // console.log({variants});
+  }
+  sortVar();
   const {
     rows,
     getTableProps,
@@ -163,8 +171,8 @@ function BulkInventoryEntryTable({
   useEffect(() => {
     setPageSize(15);
     setVariants(tableVariants);
+    // sortVar();
   }, [tableVariants]);
-
   return (
     <div className="table-container">
       <div className="row">
@@ -275,7 +283,7 @@ function BulkInventoryEntryTable({
                 prepareRow(row);
                 return (
                   <React.Fragment key={i}>
-                    <tr scope="row" key={`row-${i}`} {...row.getRowProps()}>
+                    {/* <tr scope="row" key={`row-${i}`} {...row.getRowProps()}>
                       {row.cells.map((cell, index) => {
                         return (
                           <td key={`row-${index}`} {...cell.getCellProps()}>
@@ -284,6 +292,7 @@ function BulkInventoryEntryTable({
                                 className="img-fluid rounded"
                                 src={row.original.featured_image}
                                 width="40"
+                                alt=''
                               />
                             ) : index === 1 ? (
                               <Link
@@ -293,7 +302,7 @@ function BulkInventoryEntryTable({
                                 }}
                                 className="table-edit-page-tag"
                               >
-                                {row.original.product_name}
+                                {row.original.name}
                               </Link>
                             ) : (
                               cell.render('Cell')
@@ -303,13 +312,32 @@ function BulkInventoryEntryTable({
                       })}
                       <td />
                       <td />
-                    </tr>
+                    </tr> */}
                     {variants?.map((variant, index) => {
                       if (row.original.id === variant.productId) {
                         return (
                           <tr scope="row" key={`variants-${index}`}>
-                            <td />
-                            <td>Size: {variant.value}</td>
+                            <td>
+                              {
+                                <img
+                                className="img-fluid rounded"
+                                src={row.original.featured_image}
+                                width="40"
+                                alt=''
+                                />
+                              }
+                            </td>
+                            <td>
+                              <Link
+                                to={{
+                                  pathname: `../products/${row.original.id}/edit`,
+                                  state: row.original,
+                                }}
+                                className="table-edit-page-tag"
+                              >
+                                Size: {variant.value}
+                              </Link>
+                            </td>
                             <td />
                             <td />
                             <td>{variant.cost_price}</td>

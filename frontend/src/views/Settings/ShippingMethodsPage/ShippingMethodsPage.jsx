@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiDeleteBin6Fill } from 'react-icons/ri';
+import { Link, useHistory } from 'react-router-dom';
 
 import axiosInstance from '../../../helpers/axios';
 
@@ -146,7 +146,7 @@ function ShippingMethodsPage() {
       const response = await axiosInstance.get(
         'api/v1/settings/free_shipping/',config
       );
-      console.log(response.data);
+      console.log({freeShippingData: response.data});
       setFreeShippingData(response.data);
     } catch (err) {
       console.log(err);

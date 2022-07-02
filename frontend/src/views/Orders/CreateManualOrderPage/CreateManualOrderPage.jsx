@@ -386,7 +386,7 @@ function CreateNewManualOrderPage() {
     data.has_discount = data.other_discount !== '' ? true : false;
     data.other_discount =
       data.other_discount !== '' ? data.other_discount : null;
-    data.oher_discount_type = discountType ? discountType : null;
+    data.other_discount_type = discountType ? discountType : null;
     data.item_count = cartInformation.length;
     data.ordered_reference = 'ONLINE-SALE';
     data.order_item = getOrderItems();

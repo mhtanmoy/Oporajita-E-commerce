@@ -36,6 +36,7 @@ function AllOrdersPage() {
   const [csvData, setCsvData] = useState([]);
   const columns = useMemo(() => tableHeader, []);
   const [data, setData] = useState([]);
+  const [productList, setProductList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pickerShow, setPickerShow] = useState(false);
   const [rawData, setRawData] = useState([]);
@@ -55,6 +56,7 @@ function AllOrdersPage() {
     setPageSize,
     prepareRow,
     selectedFlatRows,
+    getToggleAllPageRowsSelectedProps
   } = useTable(
     { columns, data },
     useGlobalFilter,
@@ -67,9 +69,9 @@ function AllOrdersPage() {
           id: 'selection',
           // The header can use the table's getToggleAllRowsSelectedProps method
           // to render a checkbox
-          Header: ({ getToggleAllRowsSelectedProps }) => (
+          Header: ({ getToggleAllPageRowsSelectedProps }) => (
             <div>
-              <IndeterminateCheckbox {...getToggleAllRowsSelectedProps()} />
+              <IndeterminateCheckbox {...getToggleAllPageRowsSelectedProps()} />
             </div>
           ),
           // The cell can use the individual row's getToggleRowSelectedProps method
@@ -92,7 +94,7 @@ function AllOrdersPage() {
     setData(rawData);
     if (searchInput.length > 0) {
       const searchResult = rawData.filter((order) => {
-        console.log(order);
+
         if (
           order?.fullname?.toLowerCase()?.includes(searchInput.toLowerCase()) ||
           order?.customer_phone
@@ -127,11 +129,9 @@ function AllOrdersPage() {
   };
   //bulk order post api
   async function sendData(data) {
-    console.log(data)
     
     try {
       const response = await axiosInstance.post('/api/v1/order/pathao/order/bulk/',data,config);
-      console.log(response);
       if (response.status === 200) {
         window.location.reload();
       }
@@ -142,14 +142,16 @@ function AllOrdersPage() {
   const handlesendData = () => {
     const newArray = {'orders':[]};
     for(var i =0;i<selectedFlatRows.length ; i++ ){
-      console.log(selectedFlatRows[i])
       const roWData = selectedFlatRows[i].original;
-      newArray.orders.push(roWData);
+      if(roWData.pathao_status === false){
+        newArray.orders.push(roWData);
+      }
+      // newArray.orders.push(roWData);
+
     }
-    console.log(newArray);
     sendData(newArray);
   }
-  
+   
 
 
 
@@ -187,7 +189,6 @@ function AllOrdersPage() {
           order,config
         );
         successToast(`Order Updated`);
-        console.log(response.data);
         setIsLoading(false);
       }
       getData();
@@ -206,7 +207,6 @@ function AllOrdersPage() {
         order,config
       );
       successToast(`Order ${status}`);
-      console.log(response.data);
       setIsLoading(false);
       getData();
     } catch (err) {
@@ -265,7 +265,27 @@ function AllOrdersPage() {
       return row.original;
     });
     const reshapedOrders = orders.map((order) => {
+
       console.log('order: ', order);
+  
+    //set image url
+      try{
+        for (let i = 0; i < order.order_item.length; i++) {
+          if (productList.length > 0) {
+            for (let j = 0; j < productList.length; j++) {
+              if (order.order_item[i].product === productList[j].id) {
+                order.order_item[i].featured_image = productList[j].featured_image;
+               
+              }
+            }
+      
+          }
+        }
+      }catch(err){
+        
+      }
+
+
       const container = {};
       container.customer = {
         fullname: order.fullname,
@@ -274,8 +294,8 @@ function AllOrdersPage() {
       };
       container.paid = order.paid;
       container.orderId = order.order_id;
-      container.subtotal = order.order_total;
-      container.discountTotal = order.other_discount;
+      container.subtotal = order.sub_total;
+      container.discountTotal = order.total_discount;
       container.taxTotal = order.total_tax;
       container.total = order.order_total;
       container.changes = order.other_charges;
@@ -287,6 +307,7 @@ function AllOrdersPage() {
       container.cartItems = order.order_item.map((item) => {
         return {
           name: item.product_name,
+          image: item.featured_image,
           addedQuantity: item.quantity,
           unitPrice: item.unit_price,
           price: item.price,
@@ -296,7 +317,7 @@ function AllOrdersPage() {
       });
       return container;
     });
-    console.log(reshapedOrders);
+
     return reshapedOrders;
   };
 
@@ -332,7 +353,7 @@ function AllOrdersPage() {
   };
 
   const handleSelect = (date) => {
-    console.log(date); // native Date object
+
     selectionRange.endDate = date.selection.endDate;
   };
 
@@ -361,7 +382,7 @@ function AllOrdersPage() {
       const response = await axiosInstance.post('/api/v1/order/pathao/order/', {
         order_id: id
       },config);
-      console.log(response);
+
       if (response.status === 200) {
         window.location.reload();
       }
@@ -370,13 +391,29 @@ function AllOrdersPage() {
     }
   }
   const handlePathaoClick = (orderID) => {
-    console.log(orderID);
     postPathaoData(orderID);
+  }
+
+  async function getProductData() {
+
+    try {
+      const response = await axiosInstance.get('api/v1/inventory/products/', config);
+
+      setProductList(response.data);
+
+      setIsLoading(false);
+
+    } catch (err) {
+      errorToast('Error on loading data!, Please try again.');
+      console.error(err);
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
     getData();
     // setData(tableData);
+    getProductData()
 
     setPageSize(15);
   }, []);
@@ -466,7 +503,6 @@ function AllOrdersPage() {
                   href="#"
                   onClick={() => {
                     filterDataByAPI('today');
-                    console.log(calendarFilterRef.current);
                     calendarFilterRef.current.innerHTML = 'Today';
                   }}
                 >

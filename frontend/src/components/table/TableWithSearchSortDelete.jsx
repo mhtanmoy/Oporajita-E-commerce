@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-
+import  Pagination from '../others/pagination';
 import {
   useTable,
   useSortBy,

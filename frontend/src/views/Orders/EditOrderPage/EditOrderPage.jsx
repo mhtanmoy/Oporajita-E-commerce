@@ -69,8 +69,7 @@ function EditOrderPage() {
     setShowAddNewItemModal(!showAddNewItemModal);
   };
   const initalizeProductOptions = (products) => {
-    const selectOptions = products.map((data) => {
-      return {
+    const selectOptions = products.map((data) => {      return {
         ...data,
         value: data.name,
         label: data.name,
@@ -79,14 +78,14 @@ function EditOrderPage() {
     return selectOptions;
   };
   const productOptions = initalizeProductOptions(productList);
+  
   const productSelectHandler = (event) => {
     setSelectedProduct(event);
+    
     event.imageURL = event.featured_image;
     event.price = event.variant[0].price;
-    console.log(event);
     productContentRef.current.style.display = 'block';
   };
-
   const reshapeData = () => {
     const reshapedOrders = {};
     reshapedOrders.customer = {
@@ -95,8 +94,8 @@ function EditOrderPage() {
       delivery_address: data.address,
     };
     reshapedOrders.orderId = data.order_id;
-    reshapedOrders.subtotal = data.order_total;
-    reshapedOrders.discountTotal = data.other_discount;
+    reshapedOrders.subtotal = data.sub_total;
+    reshapedOrders.discountTotal = data.total_discount;
     reshapedOrders.taxTotal = data.total_tax;
     reshapedOrders.total = data.order_total;
     reshapedOrders.paid = data.paid;
@@ -108,6 +107,7 @@ function EditOrderPage() {
     reshapedOrders.cartItems = data.order_item?.map((item) => {
       return {
         name: item.product_name,
+        image: item.featured_image,
         addedQuantity: item.quantity,
         unitPrice: item.unit_price,
         price: item.price,
@@ -116,15 +116,11 @@ function EditOrderPage() {
       };
     });
     reshapedOrders.order_note = data.order_note;
-    console.log(reshapedOrders);
     return reshapedOrders;
   };
 
 
-  //calculate total price use
-  // let totalPrice =0;
-  // totalPrice = (parseFloat(data.sub_total)+parseFloat(data.shipping_charge)+parseFloat(data.other_charges)).toFixed(2);
-
+ 
   //API
   var token = localStorage.getItem('token');
   const config = {
@@ -176,7 +172,6 @@ function EditOrderPage() {
         `api/v1/order/update/${previousData.id}/`,
         modifiedData, config
       );
-      console.log('response', response)
       setIsLoading(false);
       getData();
     } catch (err) {
@@ -278,6 +273,8 @@ function EditOrderPage() {
     newData.payment_status = 'PARTIAL';
     newData.reference = reference;
     newData.amount = paidTotal;
+    console.log("new data",newData)
+   
 
     try {
       const response = await axiosInstance.put(
@@ -304,30 +301,26 @@ function EditOrderPage() {
       setProductList(response.data);
 
       setIsLoading(false);
-      console.log(response.data);
     } catch (err) {
       errorToast('Error on loading data!, Please try again.');
       console.error(err);
       setIsLoading(false);
     }
   }
-
-  
-
+ 
+//image 
   try{
     for (let i = 0; i < data.order_item.length; i++) {
       if (productList.length > 0) {
         for (let j = 0; j < productList.length; j++) {
           if (data.order_item[i].product === productList[j].id) {
             data.order_item[i].featured_image = productList[j].featured_image;
-            console.log('product list', productList[j].featured_image);
           }
         }
   
       }
     }
   }catch(err){
-    console.log(err);
   }
 
   useEffect(() => {
@@ -336,7 +329,6 @@ function EditOrderPage() {
     getProductData();
   }, []);
 
-  console.log('data', data);
 
 
 
@@ -349,7 +341,7 @@ function EditOrderPage() {
           <h1 className="page-title col-xs-12 col-md-6">ORD-{data.id}</h1>
           <div className="page-header-button-container col-xs-12 col-md-6">
             <span className="order-balance">
-              Balance: BDT {data.order_total}
+              Balance: BDT {data.order_total-data.paid}
             </span>
             <span className="order-status mx-2">{data.status}</span>
             <span className="order-type">Manual Order</span>
@@ -409,6 +401,7 @@ function EditOrderPage() {
                           <td>
                             <img
                               className="img-fluid rounded"
+
                               src={product.featured_image && product.featured_image}
                               width="50"
                               alt="product"
@@ -478,11 +471,11 @@ function EditOrderPage() {
                       <td className="t-r">Subtotal</td>
                       <td className="t-r">BDT {data.sub_total}</td>
                     </tr>
-                    {/* <tr>
+                    <tr>
                       <td colSpan="4" />
-                      <td>Total Discount </td>
-                      <td>- BDT {data.other_discount}</td>
-                    </tr> */}
+                      <td className="t-r">Others Discount</td>
+                      <td className="t-r">BDT {data.total_discount}</td>
+                    </tr>
                     <tr>
                       <td colSpan="4" />
                       <td className="t-r">Tax</td>
@@ -557,7 +550,7 @@ function EditOrderPage() {
                 </div>
                 <div className="col-md-3">
                   {data.status === 'Rejected' ? (
-                    <button className="btn btn-primary pull-right" disabled>
+                    <button className="btn btn-primary pull-right" style={{ backgroundColor: '#ff0000' }} disabled>
                       Rejected
                     </button>
                   ) : (
@@ -787,13 +780,12 @@ function EditOrderPage() {
                   </thead>
                   <tbody>
                     {data?.order_item?.map((product, index) => {
-                      console.log('product', product)
                       return (
                         <tr key={index}>
                           <td>
                             <img
                               className="img-fluid rounded"
-                              src={product.product_image}
+                              src={product.featured_image && product.featured_image}
                               width="50"
                               alt="product"
                             />

@@ -67,9 +67,9 @@ function Pagination({
             setCurrentPageNumberIndex(0);
           }}
         >
-          <a className="page-link" href="#" aria-label="Previous">
+          <button className="page-link"  aria-label="Previous">
             <span aria-hidden="true">&laquo;</span>
-          </a>
+          </button>
         </li>
         <li
           className={`page-item ${!canPreviousPage ? 'disabled' : ''}`}
@@ -84,9 +84,9 @@ function Pagination({
             setCurrentPageNumberIndex(currentPageNumberIndex - 1);
           }}
         >
-          <a className="page-link" href="#" aria-label="Previous">
+          <button className="page-link"  aria-label="Previous">
             <span aria-hidden="true">‹</span>
-          </a>
+          </button>
         </li>
         {getSliceOfPaginationNumberButtons(paginationStartNumberIndex).map(
           (number, index) => {
@@ -102,9 +102,11 @@ function Pagination({
                   setCurrentPageNumberIndex(number - 1);
                 }}
               >
-                <a className="page-link" href="#">
+
+                <button className="page-link" >
+
                   {number}
-                </a>
+                </button>
               </li>
             );
           }
@@ -115,16 +117,16 @@ function Pagination({
             nextPage();
             if (
               canNextPage &&
-              paginationStartNumberIndex + 1 == maxPaginationNumberButtons
+              paginationStartNumberIndex + 1 === maxPaginationNumberButtons
             ) {
               setPaginationStartNumberIndex(paginationStartNumberIndex - 1);
             }
             setCurrentPageNumberIndex(currentPageNumberIndex + 1);
           }}
         >
-          <a className="page-link" href="#" aria-label="Next">
+          <button  className="page-link" aria-label="Next">
             <span aria-hidden="true">›</span>
-          </a>
+          </button>
         </li>
         <li
           className={`page-item ${!canNextPage ? 'disabled' : ''}`}
@@ -136,9 +138,9 @@ function Pagination({
             setCurrentPageNumberIndex(totalPage - 1);
           }}
         >
-          <a className="page-link" href="#" aria-label="Next">
+          <button className="page-link" aria-label="Next">
             <span aria-hidden="true">&raquo;</span>
-          </a>
+          </button>
         </li>
       </ul>
     </nav>
