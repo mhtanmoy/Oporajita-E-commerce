@@ -137,24 +137,24 @@ function GridView() {
     ];
     for (let i = 0; i < givenData.am.length; i++) {
       const index = Number(givenData.am[i].name.substr(0, 2));
-      console.log(reshapedAMData[index - 1], givenData.am[i]);
+      
       reshapedAMData[index - 1].y = Number(givenData.am[i].y);
     }
     reshapedAMData.unshift(reshapedAMData.pop());
-    console.log(reshapedAMData);
+    
     for (let i = 0; i < givenData.pm.length; i++) {
       const index = Number(givenData.pm[i].name.substr(0, 2));
-      console.log(reshapedPMData[index - 1], givenData.pm[i]);
+      
       reshapedPMData[index - 1].y = Number(givenData.pm[i].y);
     }
     reshapedPMData.unshift(reshapedPMData.pop());
-    console.log(reshapedPMData);
+    
     let data = [...reshapedAMData, ...reshapedPMData];
     const firstHalf = data.slice(0, 6);
     const secondHalf = data.slice(6);
-    console.log(firstHalf, secondHalf);
+    
     data = [...secondHalf, ...firstHalf];
-    console.log(data);
+    
     return data;
   };
 
@@ -165,7 +165,7 @@ function GridView() {
       const response = await axiosInstance.get(
         `api/v1/inventory/dashboard/?param=${type}`
       );
-      console.log(response.data);
+      
       const data = await vizDataShaper(response.data);
       type === 'sales' &&
         setSalesVizData({

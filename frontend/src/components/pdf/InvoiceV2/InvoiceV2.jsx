@@ -24,6 +24,7 @@ function InvoiceV2(props) {
     cartItems,
     subtotal,
     discountTotal,
+    shipping_charge,
     taxTotal,
     total,
     product_image,
@@ -137,23 +138,23 @@ function InvoiceV2(props) {
           })}
           <View style={styles.geryTableContainer}>
             <Text style={styles.tableDataItem} />
+            <Text style={styles.tableData}>Shipping Price</Text>
+            <Text style={styles.tableData}>BDT {shipping_charge}</Text>
+          </View>
+          <View style={styles.tableSummaryContainer}>
+            <Text style={styles.tableDataItem} />
             <Text style={styles.tableData}>Subtotal</Text>
             <Text style={styles.tableData}>BDT {subtotal}</Text>
           </View>
-          <View style={styles.tableSummaryContainer}>
+          <View style={styles.geryTableContainer}>
             <Text style={styles.tableDataItem} />
             <Text style={styles.tableData}>Vat / Tax</Text>
             <Text style={styles.tableData}>BDT {taxTotal}</Text>
           </View>
-          <View style={styles.geryTableContainer}>
+          <View style={styles.tableSummaryContainer}>
             <Text style={styles.tableDataItem} />
             <Text style={styles.tableDataBold}>Total</Text>
             <Text style={styles.tableData}>BDT {total}</Text>
-          </View>
-          <View style={styles.tableSummaryContainer}>
-            <Text style={styles.tableDataItem} />
-            <Text style={styles.tableDataBold}>Total Paid</Text>
-            <Text style={styles.tableDataBold}>BDT {paid}</Text>
           </View>
           <View style={styles.geryTableContainer}>
             <Text style={styles.tableDataItem} />
@@ -163,6 +164,11 @@ function InvoiceV2(props) {
             ) : (
               <Text style={styles.tableDataRed}>BDT {total - paid}</Text>
             )}
+          </View>
+          <View style={styles.tableSummaryContainer}>
+            <Text style={styles.tableDataItem} />
+            <Text style={styles.tableDataBold}>Total Paid</Text>
+            <Text style={styles.tableDataBold}>BDT {paid}</Text>
           </View>
           <View style={styles.underline} />
           {paymentDetailsPayment.map((payment, index) => {

@@ -1463,3 +1463,11 @@ textarea {
 
 /* ==== Responsive */
 @import url(responsive.css);
+
+.iserror1{
+  color: rgb(219, 37, 37);
+  padding-left: 10px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: right;
+}

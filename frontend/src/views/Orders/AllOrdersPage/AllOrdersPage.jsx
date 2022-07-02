@@ -279,6 +279,7 @@ function AllOrdersPage() {
       container.taxTotal = order.total_tax;
       container.total = order.order_total;
       container.changes = order.other_charges;
+      container.shipping_charge = order.shipping_charge;
       container.created = order.created;
       container.servedBy = order.ordered_by;
       container.order_note = order.order_note;

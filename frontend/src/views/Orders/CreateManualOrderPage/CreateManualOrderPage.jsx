@@ -15,6 +15,7 @@ function CreateNewManualOrderPage() {
 
   //states
   const [isLoading, setIsLoading] = useState(true);
+  const [iserror, setIserror] = useState('');
   const [customerList, setCustomerList] = useState([]);
   const [productList, setProductList] = useState([]);
   const [discountType, setDiscountType] = useState('');
@@ -400,10 +401,17 @@ function CreateNewManualOrderPage() {
       const response = await axiosInstance.post('api/v1/order/create/', data,config);
       console.log(response.data);
       setIsLoading(false);
-      successToast('Order created');
-      history.push('/admin/orders');
+      
+      if(response.data.id){
+        successToast('Order created');
+        history.push('/admin/orders');
+      }else if(response.status !== 200){
+        setIserror('Error! Please try again to create order.')
+      }else{
+        setIserror('Invalid entered data, Please try again.');
+      }
     } catch (err) {
-      errorToast('Error!, Please try again to create order.');
+      setIserror('Error! Please try again to create order.');
       console.error(err);
       setIsLoading(false);
     }
@@ -657,7 +665,7 @@ function CreateNewManualOrderPage() {
   let handleCoupon = (coupon) => {
     const token = window.localStorage.getItem("token");
 
-    fetch('https://oporajita1.herokuapp.com/api/v1/app/promocodes/', {
+    fetch('http://127.0.0.1:8000/api/v1/app/promocodes/', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -876,7 +884,7 @@ function CreateNewManualOrderPage() {
                     </select>
                   </div>
                   <div className="mb-3 col-xs-12 col-md-6">
-                    <img src={selectedProduct.imageURL} alt='' />
+                    <img src={selectedProduct.imageURL} width="150" alt='' />
                   </div>
                 </div>
               </div>
@@ -1136,19 +1144,32 @@ function CreateNewManualOrderPage() {
                                   defaultChecked="true"
                                   {...register('is_sms_send')}
                                 />
-                                <span>Send SMS</span>
+                                <span>Send Invoice</span>
                               </div>
                               <p
                                 className="help-block"
                                 style={{ lineHeight: '1.1' }}
                               >
-                                SMS won't be sent if this is not checked
+                                SMS OR EMAIL won't be sent if this is not checked
                               </p>
+                              <div>
+                                <div className="radio-container">
+                                  <input
+                                    type="checkbox"
+                                    name="sms"
+                                    className="form-check-input"
+                                    defaultChecked="true"
+                                    {...register('is_paid')}
+                                  />
+                                  <span>Paid</span>
+                                </div>
+                              </div>
                             </div>
                             <div className="col-6">
                               <button className="btn btn-primary pull-right">
                                 Create Order
                               </button>
+                              
                             </div>
                           </div>
                         </div>
@@ -1176,7 +1197,9 @@ function CreateNewManualOrderPage() {
                     </div>
                   </div>
                 )}
+                <h4 className='iserror1'>{iserror && iserror}</h4>
               </div>
+              
             </div>
             <div className="col-xs-12 col-md-4">
               <div className="panel-container">
@@ -1186,7 +1209,7 @@ function CreateNewManualOrderPage() {
                   <label className="row-option-title required">Full Name</label>
                   <input
                     type="text"
-                    {...register('name', { required: true })}
+                    {...register('name')}
                     className={`form-control ${errors.name ? 'is-invalid' : ''
                       }`}
                     value={selectedCustomer.name}
@@ -1223,7 +1246,7 @@ function CreateNewManualOrderPage() {
                   <input
                     type="number"
                     min="0"
-                    {...register('phone', { required: true })}
+                    {...register('phone')}
                     className={`form-control ${selectedCustomer.phone.length > 11 ||
                       (selectedCustomer.phone.length < 11 &&
                         selectedCustomer.phone.length > 0)
@@ -1250,9 +1273,8 @@ function CreateNewManualOrderPage() {
                   <label className="row-option-title required">Billing Address</label>
                   <textarea
                     type="text"
-                    className={`form-control ${errors.name ? 'is-invalid' : ''
-                      }`}
-                    {...register('billing_address',{required:true, minLength:10})} 
+                    className="form-control"
+                    {...register('billing_address',)} 
                     value={selectedCustomer.billingAddress}
                     onChange={(e) => {
                       setSelectedCustomer({
@@ -1261,9 +1283,9 @@ function CreateNewManualOrderPage() {
                       });
                     }}
                   />
-                  <div className="invalid-feedback">
+                  {/* <div className="invalid-feedback">
                     {errors.name && "Minimum Length 10 characters"}
-                  </div>
+                  </div> */}
                 </div>
                 <div className="mb-3 col-12">
                   <label className="row-option-title">Customer Note</label>

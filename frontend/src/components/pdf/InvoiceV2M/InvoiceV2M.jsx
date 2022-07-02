@@ -46,6 +46,7 @@ function InvoiceV2M({ orders }) {
           cartItems,
           subtotal,
           discountTotal,
+          shipping_charge,
           taxTotal,
           total,
           changes,
@@ -147,25 +148,30 @@ function InvoiceV2M({ orders }) {
           })}
           <View style={styles.geryTableContainer}>
             <Text style={styles.tableDataItem} />
+            <Text style={styles.tableData}>Shipping</Text>
+            <Text style={styles.tableData}>BDT {shipping_charge}</Text>
+          </View>
+          <View style={styles.tableSummaryContainer}>
+            <Text style={styles.tableDataItem} />
             <Text style={styles.tableData}>Subtotal</Text>
             <Text style={styles.tableData}>BDT {subtotal}</Text>
           </View>
-          <View style={styles.tableSummaryContainer}>
+          <View style={styles.geryTableContainer}>
             <Text style={styles.tableDataItem} />
             <Text style={styles.tableData}>Vat / Tax</Text>
             <Text style={styles.tableData}>BDT {taxTotal}</Text>
           </View>
-          <View style={styles.geryTableContainer}>
+          <View style={styles.tableSummaryContainer}>
             <Text style={styles.tableDataItem} />
             <Text style={styles.tableDataBold}>Total</Text>
             <Text style={styles.tableData}>BDT {total}</Text>
           </View>
-          <View style={styles.tableSummaryContainer}>
+          <View style={styles.geryTableContainer}>
             <Text style={styles.tableDataItem} />
             <Text style={styles.tableDataBold}>Total Paid</Text>
             <Text style={styles.tableDataBold}>BDT {paid}</Text>
           </View>
-          <View style={styles.geryTableContainer}>
+          <View style={styles.tableSummaryContainer}>
             <Text style={styles.tableDataItem} />
             <Text style={styles.tableDataBold}>Total Due</Text>
             {paid > total ? (

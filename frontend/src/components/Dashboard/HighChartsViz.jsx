@@ -135,7 +135,7 @@ export default function HighChartsViz({
   ];
 
   useEffect(() => {
-    console.log(vizData);
+    
 
     Highcharts.chart(vizID, {
       chart: {

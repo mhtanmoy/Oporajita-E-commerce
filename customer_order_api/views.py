@@ -278,16 +278,25 @@ class OrderCreate(generics.CreateAPIView):
                         email = self.request.data['email']
                         print("2")
 
-                    if get_user_model().objects.filter(username=username).exists():
-                        print("3")
-                        return Response(
-                            {'message': 'User already exists'})
+                    # if get_user_model().objects.filter(username=username).exists():
+                    #     print("3")
+                    #     return Response(
+                    #         {'message': 'User already exists'})
                     password = BaseUserManager().make_random_password()
                     print("4")
                     print(username, email, password, first_name,
                           last_name, self.request.data['phone'])
-                    
-                    new_user = get_user_model().objects.create_user(username=username, email=email, password=password, first_name=first_name, last_name=last_name, phone=self.request.data['phone'], is_admin=False, is_customer=True, is_active=True, is_staff=False, is_superuser=False)
+                    try:
+                        new_user = get_user_model().objects.create_user(username=username, email=email, password=password, first_name=first_name, last_name=last_name, phone=self.request.data['phone'], is_admin=False, is_customer=True, is_active=True, is_staff=False, is_superuser=False)
+                    except Exception as e:
+                        new_user = get_user_model().objects.get(username=username)
+                        new_user.email = email
+                        new_user.first_name = first_name
+                        new_user.last_name = last_name
+                        new_user.phone = self.request.data['phone']
+                        new_user.save()
+                        print("7")
+                        print(new_user)
                     # new_user.save()
                     # print(new_user1)
                     print(new_user.first_name)
@@ -301,22 +310,33 @@ class OrderCreate(generics.CreateAPIView):
                     if new_user is not None:
                         print("5")
                         try:
-                            customer_ins = CustomerProfile.objects.create(
-                                user=new_user,
-                                phone=self.request.data['phone'],
-                                first_name=first_name,
-                                last_name=last_name,
-                                email=email,
-                                address=self.request.data['address'],
-                            )
+                            try:
+                                customer_ins = CustomerProfile.objects.create(
+                                    user=new_user,
+                                    phone=self.request.data['phone'],
+                                    first_name=first_name,
+                                    last_name=last_name,
+                                    email=email,
+                                    address=self.request.data['address'],
+                                )
+                            except Exception as e:
+                                customer_ins = CustomerProfile.objects.create(
+                                    user=new_user,
+                                    phone=self.request.data['phone'],
+                                    first_name=first_name,
+                                    last_name=last_name,
+                                    address=self.request.data['address'],
+                                )
                         except Exception as e:
-                            customer_ins = CustomerProfile.objects.create(
-                                user=new_user,
-                                phone=self.request.data['phone'],
-                                first_name=first_name,
-                                last_name=last_name,
-                                address=self.request.data['address'],
-                            )
+                            print(e)
+                            print("6")
+                            customer_ins = CustomerProfile.objects.get(
+                                user=new_user)
+                            customer_ins.phone = self.request.data['phone']
+                            customer_ins.first_name = first_name
+                            customer_ins.last_name = last_name
+                            customer_ins.address = self.request.data['address']
+                            customer_ins.save()
                         print(customer_ins)
 
                 print("User Instance ", new_user)
@@ -597,6 +617,16 @@ class OrderCreate(generics.CreateAPIView):
                     # order.pathao_merchant_order_id = str(order.id)+str(date)
                     print("Order ID", order_id)
                     order.order_id = order_id
+                    try:
+                        if self.request.data['is_paid']:
+                            print(order.order_total)
+                            order.paid = order.order_total
+                            order.payment_method="CASHON_DELIVERY"
+                            order.payment_status="PAID"
+                            order.is_payment_successful=True
+                    except Exception as e:
+                        print(e)
+                    
                     order.save()
                     serializer = OrderSerializer(order)
                     try:
@@ -887,7 +917,12 @@ class OrderDetail(APIView):
                         print("Payment else block")
                         total_due = grand_total
                     print("Due check end")
-
+                    try:
+                        shipping_charge = self.request.data['shipping_charge']
+                        grand_total = float(grand_total) + float(shipping_charge)
+                        print(grand_total)
+                    except Exception as e:
+                        print(e)
                     # order_details = {
                     #     'total_amount': grand_total,
                     #     'tran_id': 'TRX' + str(now) + str(customer_ins.id),

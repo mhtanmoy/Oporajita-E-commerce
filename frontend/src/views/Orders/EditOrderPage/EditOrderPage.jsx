@@ -22,7 +22,13 @@ import Progress from '../../../components/loading/Progress';
 function EditOrderPage() {
   const location = useLocation();
   //states
-  const previousData = location.state;
+  var previousData = location.state;
+  if (previousData !== undefined) {
+    localStorage.setItem('previousData', JSON.stringify(previousData));
+  } else {
+    previousData = JSON.parse(localStorage.getItem('previousData'));
+  }
+
   const [isLoading, setIsLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showEditOrderItemModal, setShowEditOrderItemModal] = useState(false);
@@ -95,6 +101,7 @@ function EditOrderPage() {
     reshapedOrders.total = data.order_total;
     reshapedOrders.paid = data.paid;
     reshapedOrders.changes = data.other_charges;
+    reshapedOrders.shipping_charge = data.shipping_charge;
     reshapedOrders.created = data.created;
     reshapedOrders.servedBy = data.ordered_by;
     reshapedOrders.paymentDetailsPayment = [{}];
@@ -112,6 +119,11 @@ function EditOrderPage() {
     console.log(reshapedOrders);
     return reshapedOrders;
   };
+
+
+  //calculate total price use
+  // let totalPrice =0;
+  // totalPrice = (parseFloat(data.sub_total)+parseFloat(data.shipping_charge)+parseFloat(data.other_charges)).toFixed(2);
 
   //API
   var token = localStorage.getItem('token');
@@ -131,7 +143,7 @@ function EditOrderPage() {
       (product) => product.id === variantID.id
     );
     console.log('---------');
-    console.log('variant data',variantID);
+    console.log('variant data', variantID);
     console.log(selectedProduct.id, variantID);
     console.log('---===------');
     console.log('product ', product);
@@ -162,9 +174,9 @@ function EditOrderPage() {
     try {
       const response = await axiosInstance.put(
         `api/v1/order/update/${previousData.id}/`,
-        modifiedData,config
+        modifiedData, config
       );
-      console.log('response',response)
+      console.log('response', response)
       setIsLoading(false);
       getData();
     } catch (err) {
@@ -172,10 +184,10 @@ function EditOrderPage() {
     }
   }
   async function getData() {
- 
+
     try {
       const response = await axiosInstance.get(
-        `api/v1/order/update/${previousData.id}/`,config
+        `api/v1/order/update/${previousData.id}/`, config
       );
       console.log('response', response.data);
       setIsLoading(false);
@@ -192,7 +204,7 @@ function EditOrderPage() {
     try {
       const response = await axiosInstance.put(
         `api/v1/order/update/${previousData.id}/`,
-        data,config
+        data, config
       );
       console.log(response.data);
       setIsLoading(false);
@@ -209,7 +221,7 @@ function EditOrderPage() {
     try {
       const response = await axiosInstance.put(
         `api/v1/order/update/${previousData.id}/`,
-        data,config
+        data, config
       );
       console.log(response.data);
       setIsLoading(false);
@@ -222,11 +234,11 @@ function EditOrderPage() {
   }
   async function updateItems() {
     setIsLoading(true);
-  
+
     try {
       const response = await axiosInstance.put(
         `api/v1/order/update/${previousData.id}/`,
-        data,config
+        data, config
       );
       console.log(response.data);
       setIsLoading(false);
@@ -241,11 +253,11 @@ function EditOrderPage() {
     setIsLoading(true);
     const newData = data;
     newData.status = status;
- 
+
     try {
       const response = await axiosInstance.put(
         `api/v1/order/update/${previousData.id}/`,
-        newData,config
+        newData, config
       );
       console.log(response.data);
       setIsLoading(false);
@@ -266,11 +278,11 @@ function EditOrderPage() {
     newData.payment_status = 'PARTIAL';
     newData.reference = reference;
     newData.amount = paidTotal;
-   
+
     try {
       const response = await axiosInstance.put(
         `api/v1/order/update/${previousData.id}/`,
-        newData,config
+        newData, config
       );
       console.log(response.data);
       setIsLoading(false);
@@ -285,12 +297,12 @@ function EditOrderPage() {
   }
 
   async function getProductData() {
-  
+
     try {
-      const response = await axiosInstance.get('api/v1/inventory/products/',config);
+      const response = await axiosInstance.get('api/v1/inventory/products/', config);
 
       setProductList(response.data);
-      
+
       setIsLoading(false);
       console.log(response.data);
     } catch (err) {
@@ -300,11 +312,33 @@ function EditOrderPage() {
     }
   }
 
+  
+
+  try{
+    for (let i = 0; i < data.order_item.length; i++) {
+      if (productList.length > 0) {
+        for (let j = 0; j < productList.length; j++) {
+          if (data.order_item[i].product === productList[j].id) {
+            data.order_item[i].featured_image = productList[j].featured_image;
+            console.log('product list', productList[j].featured_image);
+          }
+        }
+  
+      }
+    }
+  }catch(err){
+    console.log(err);
+  }
+
   useEffect(() => {
     getData();
     setData(previousData);
     getProductData();
   }, []);
+
+  console.log('data', data);
+
+
 
   return (
     <div className="page-container-scroll">
@@ -375,7 +409,7 @@ function EditOrderPage() {
                           <td>
                             <img
                               className="img-fluid rounded"
-                              src={product.product_image}
+                              src={product.featured_image && product.featured_image}
                               width="50"
                               alt="product"
                             />
@@ -753,7 +787,7 @@ function EditOrderPage() {
                   </thead>
                   <tbody>
                     {data?.order_item?.map((product, index) => {
-                      console.log('product',product)
+                      console.log('product', product)
                       return (
                         <tr key={index}>
                           <td>
@@ -886,7 +920,7 @@ function EditOrderPage() {
                 <h5 className="modal-title" style={{ fontSize: '14px' }}>
                   Adjust Inventory :{' '}
                   {data.order_item[inventoryVariant].product_name} : Size(
-                  {data.order_item[inventoryVariant].size})
+                  {data.order_item[inventoryVariant].size_value})
                 </h5>
                 <button
                   type="button"
@@ -1031,9 +1065,8 @@ function EditOrderPage() {
                             type="number"
                             min="1"
                             value={givenQuantity}
-                            className={`form-control ${
-                              givenQuantity < '1' ? 'is-invalid' : ''
-                            }`}
+                            className={`form-control ${givenQuantity < '1' ? 'is-invalid' : ''
+                              }`}
                             onChange={(e) => {
                               setGivenQuantity(e.target.value);
                             }}
