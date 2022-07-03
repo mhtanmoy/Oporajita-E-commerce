@@ -882,7 +882,7 @@ class OrderDetail(APIView):
                     if promo_code_instance == None:
                         try:
                             other_discount = float(
-                                self.request.data['other_discount'])
+                                self.request.data['total_discount'])
                             other_discount = other_discount
                         except Exception as e:
                             other_discount = 0
