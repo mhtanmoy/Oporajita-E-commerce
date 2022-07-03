@@ -899,7 +899,7 @@ class OrderDetail(APIView):
                     if other_charges > 0:
                         grand_total = float(grand_total) + float(other_charges)
                     print("Due check start")
-                    payment = self.request.data['paid']
+                    payment = self.request.data['amount']
                     payment = float(payment)
                     if payment is None or payment == 0:
                         payment = 0.00

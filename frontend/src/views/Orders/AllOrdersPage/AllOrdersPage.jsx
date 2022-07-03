@@ -36,6 +36,7 @@ function AllOrdersPage() {
   const [csvData, setCsvData] = useState([]);
   const columns = useMemo(() => tableHeader, []);
   const [data, setData] = useState([]);
+  const [productList, setProductList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pickerShow, setPickerShow] = useState(false);
   const [rawData, setRawData] = useState([]);
@@ -55,6 +56,7 @@ function AllOrdersPage() {
     setPageSize,
     prepareRow,
     selectedFlatRows,
+    getToggleAllPageRowsSelectedProps
   } = useTable(
     { columns, data },
     useGlobalFilter,
@@ -67,9 +69,9 @@ function AllOrdersPage() {
           id: 'selection',
           // The header can use the table's getToggleAllRowsSelectedProps method
           // to render a checkbox
-          Header: ({ getToggleAllRowsSelectedProps }) => (
+          Header: ({ getToggleAllPageRowsSelectedProps }) => (
             <div>
-              <IndeterminateCheckbox {...getToggleAllRowsSelectedProps()} />
+              <IndeterminateCheckbox {...getToggleAllPageRowsSelectedProps()} />
             </div>
           ),
           // The cell can use the individual row's getToggleRowSelectedProps method
@@ -84,7 +86,7 @@ function AllOrdersPage() {
       ]);
     }
   );
-  
+
 
   //handlers
   //search
@@ -92,7 +94,7 @@ function AllOrdersPage() {
     setData(rawData);
     if (searchInput.length > 0) {
       const searchResult = rawData.filter((order) => {
-        console.log(order);
+
         if (
           order?.fullname?.toLowerCase()?.includes(searchInput.toLowerCase()) ||
           order?.customer_phone
@@ -127,11 +129,9 @@ function AllOrdersPage() {
   };
   //bulk order post api
   async function sendData(data) {
-    console.log(data)
-    
+
     try {
-      const response = await axiosInstance.post('/api/v1/order/pathao/order/bulk/',data,config);
-      console.log(response);
+      const response = await axiosInstance.post('/api/v1/order/pathao/order/bulk/', data, config);
       if (response.status === 200) {
         window.location.reload();
       }
@@ -140,16 +140,18 @@ function AllOrdersPage() {
     }
   }
   const handlesendData = () => {
-    const newArray = {'orders':[]};
-    for(var i =0;i<selectedFlatRows.length ; i++ ){
-      console.log(selectedFlatRows[i])
+    const newArray = { 'orders': [] };
+    for (var i = 0; i < selectedFlatRows.length; i++) {
       const roWData = selectedFlatRows[i].original;
-      newArray.orders.push(roWData);
+      if (roWData.pathao_status === false) {
+        newArray.orders.push(roWData);
+      }
+      // newArray.orders.push(roWData);
+
     }
-    console.log(newArray);
     sendData(newArray);
   }
-  
+
 
 
 
@@ -158,9 +160,9 @@ function AllOrdersPage() {
 
 
   async function getData() {
-   
+
     try {
-      const response = await axiosInstance.get('api/v1/order',config);
+      const response = await axiosInstance.get('api/v1/order', config);
       setData(response.data);
       setRawData(response.data);
       setIsLoading(false);
@@ -176,18 +178,17 @@ function AllOrdersPage() {
     const orders = selectedFlatRows.map((row) => {
       return row.original;
     });
-   
+
     try {
       for (let i = 0; i < orders.length; i++) {
         const order = orders[i];
         order.is_fulfilled = true;
-        
+
         const response = await axiosInstance.put(
           `api/v1/order/update/${order.id}/`,
-          order,config
+          order, config
         );
         successToast(`Order Updated`);
-        console.log(response.data);
         setIsLoading(false);
       }
       getData();
@@ -198,15 +199,14 @@ function AllOrdersPage() {
     }
   }
   async function updateOrder(order, status) {
-    
+
     try {
       order.status = status;
       const response = await axiosInstance.put(
         `api/v1/order/update/${order.id}/`,
-        order,config
+        order, config
       );
       successToast(`Order ${status}`);
-      console.log(response.data);
       setIsLoading(false);
       getData();
     } catch (err) {
@@ -216,10 +216,10 @@ function AllOrdersPage() {
     }
   }
   async function filterDataByAPI(filterType) {
-    
+
     try {
       const response = await axiosInstance.get(
-        `api/v1/order/order-filter/?time=${filterType}`,config
+        `api/v1/order/order-filter/?time=${filterType}`, config
       );
       setData(response.data.orders);
       setRawData(response.data.orders);
@@ -265,7 +265,27 @@ function AllOrdersPage() {
       return row.original;
     });
     const reshapedOrders = orders.map((order) => {
+
       console.log('order: ', order);
+      //set image url
+      try {
+        for (let i = 0; i < order.order_item.length; i++) {
+          if (productList.length > 0) {
+            for (let j = 0; j < productList.length; j++) {
+              if (order.order_item[i].product === productList[j].id) {
+                order.order_item[i].featured_image = productList[j].featured_image;
+
+              }
+            }
+
+          }
+        }
+      } catch (err) {
+        console.log('error: ', err);
+      }
+
+
+
       const container = {};
       container.customer = {
         fullname: order.fullname,
@@ -274,8 +294,8 @@ function AllOrdersPage() {
       };
       container.paid = order.paid;
       container.orderId = order.order_id;
-      container.subtotal = order.order_total;
-      container.discountTotal = order.other_discount;
+      container.subtotal = order.sub_total;
+      container.discountTotal = order.total_discount;
       container.taxTotal = order.total_tax;
       container.total = order.order_total;
       container.changes = order.other_charges;
@@ -287,6 +307,7 @@ function AllOrdersPage() {
       container.cartItems = order.order_item.map((item) => {
         return {
           name: item.product_name,
+          image: item.featured_image,
           addedQuantity: item.quantity,
           unitPrice: item.unit_price,
           price: item.price,
@@ -296,7 +317,7 @@ function AllOrdersPage() {
       });
       return container;
     });
-    console.log(reshapedOrders);
+
     return reshapedOrders;
   };
 
@@ -332,7 +353,7 @@ function AllOrdersPage() {
   };
 
   const handleSelect = (date) => {
-    console.log(date); // native Date object
+
     selectionRange.endDate = date.selection.endDate;
   };
 
@@ -356,12 +377,12 @@ function AllOrdersPage() {
   };
   // -----pathao handle------
   async function postPathaoData(id) {
-    
+
     try {
       const response = await axiosInstance.post('/api/v1/order/pathao/order/', {
         order_id: id
-      },config);
-      console.log(response);
+      }, config);
+
       if (response.status === 200) {
         window.location.reload();
       }
@@ -370,16 +391,34 @@ function AllOrdersPage() {
     }
   }
   const handlePathaoClick = (orderID) => {
-    console.log(orderID);
     postPathaoData(orderID);
   }
+
+  async function getProductData() {
+
+    try {
+      const response = await axiosInstance.get('api/v1/inventory/products/', config);
+
+      setProductList(response.data);
+
+      setIsLoading(false);
+
+    } catch (err) {
+      errorToast('Error on loading data!, Please try again.');
+      console.error(err);
+      setIsLoading(false);
+    }
+  }
+
 
   useEffect(() => {
     getData();
     // setData(tableData);
+    getProductData()
 
     setPageSize(15);
   }, []);
+
   return (
     <div className="page-container-scroll">
       <div className="page-container">
@@ -391,7 +430,7 @@ function AllOrdersPage() {
         <div className="page-header-container row">
           <h1 className="page-title col-xs-12 col-md-6">Orders</h1>
           <div className="page-header-button-container col-xs-12 col-md-6">
-          {selectedFlatRows.length > 0 && (
+            {selectedFlatRows.length > 0 && (
               <button
                 className="btn btn-warning"
                 type="button"
@@ -466,7 +505,6 @@ function AllOrdersPage() {
                   href="#"
                   onClick={() => {
                     filterDataByAPI('today');
-                    console.log(calendarFilterRef.current);
                     calendarFilterRef.current.innerHTML = 'Today';
                   }}
                 >
@@ -691,7 +729,7 @@ function AllOrdersPage() {
                     return (
                       <tr scope="row" key={i} {...row.getRowProps()}>
                         {row.cells.map((cell, index) => {
-                      
+
                           return (
                             <td key={index} {...cell.getCellProps()}>
                               {index === 1 ? (
@@ -717,7 +755,7 @@ function AllOrdersPage() {
                                 </span>
                               ) : index === 5 ? (
                                 row.original.is_fulfilled ? (
-                                  <span className="fulfilment-label">
+                                  <span className="fulfilment-label bg-success text-white p-1 rounded">
                                     Fulfilled
                                   </span>
                                 ) : (

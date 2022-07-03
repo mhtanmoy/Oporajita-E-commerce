@@ -1,14 +1,17 @@
-import axios from 'axios';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
+import axiosInstance from '../../../../helpers/axios';
+import EcommerceStaff from './DescriptionComponents/MainComponents/EcommerceStaff/EcommerceStaff';
+
 
 function AddNewUserPage() {
   //axios
-  axios.defaults = 'http://localhost:8000';
+  // axios.defaults = 'http://localhost:8000';
 
   //states
   const [roleType, setRoleType] = useState({});
+  const [rolesArray, setRolesArray] = useState([]);
 
   //hooks
   const {
@@ -17,6 +20,7 @@ function AddNewUserPage() {
     formState: { errors_profile },
   } = useForm();
   const {
+    watch:roles_watch,
     register: roles,
     handleSubmit: handleSubmitRoles,
     formState: { errors_roles },
@@ -34,24 +38,42 @@ function AddNewUserPage() {
       e.prevent.Default();
     }
   };
-  const rolesArray =[
-    {
-      value:null,
-      name:'Select..',
+  //temporary data
+  // const rolesArray =[
+  //   {
+  //     value:null,
+  //     name:'Select..',
+  //   },
+  //   {
+  //     value:'ecommerce_staff',
+  //     name: 'Ecommerce Staff',
+  //   },
+  //   {
+  //     value:'pos_cashier',
+  //     name:'Pos Cashier',
+  //   },
+  //   {
+  //     value:'pos_manager',
+  //     name:'Pos Manager',
+  //   }
+  // ];
+  var token = localStorage.getItem('token');
+  const config = {
+    headers: {
+      "Content-type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-    {
-      value:'ecommerce_staff',
-      name: 'Ecommerce Staff',
-    },
-    {
-      value:'pos_cashier',
-      name:'Pos Cashier',
-    },
-    {
-      value:'pos_manager',
-      name:'Pos Manager',
-    }
-  ]
+  };
+  //roles
+  const getRoles = async ()=>{
+    const response = await axiosInstance.get('https://oporajita1.herokuapp.com/api/v1/settings/role/',config);
+    setRolesArray(response.data)
+    console.log(response.data);
+  }
+
+  useEffect(()=>{
+    getRoles();
+  },[])
 
   return (
     <div className="page-container-scroll">
@@ -100,7 +122,7 @@ function AddNewUserPage() {
             onKeyDown={(e) => checkKeyDown(e)}
           >
             <div className="row">
-            <div className="col-xs-12 col-md-3">
+              <div className="col-xs-12 col-md-3">
                 <p
                   className="setting-page-container-title"
                   style={{ marginTop: '0px' }}
@@ -115,24 +137,29 @@ function AddNewUserPage() {
                     name="role" 
                     className='form-control' 
                     {...roles('role',{required:true})}
-                    onChange={(e)=>setRoleType(e.target.value)}
+                    onChange={(e)=>{
+                      console.log(e.target.value);
+                      setRoleType(e.target.value)
+                    }}
                   >
                     {
-                      rolesArray.map(role=><option key={role.value} value={role.value}>{role.name}</option>)
+                      rolesArray.map(role=><option key={role.id} value={role.id}>{role.name}</option>)
                     }
                   </select>
                 </div>
               </div>
-              {
-                console.log(roleType)
-              }
-              <div className="col-xs-11">
-                <hr className=" grey"/>
-              </div>
+            </div>
+
+            <hr className="light-grey"/>
+
+              <EcommerceStaff roles={roles} roles_watch={roles_watch}/>
+
+              <hr className="light-grey"/>
+
               <div className="form-submit-button-end">
                 <button className="btn btn-primary">Send Invite</button>
               </div>
-            </div>
+            {/* </div> */}
           </form>
         </div>
       </div>

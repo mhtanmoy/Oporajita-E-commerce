@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useMemo, createRef, useRef } from 'react';
 import { Link } from 'react-router-dom';
-
+import  Pagination from '../others/pagination';
 import {
   useTable,
   useSortBy,
@@ -62,6 +62,7 @@ function TableWithTabFilterSearchSort({
     gotoPage,
     nextPage,
     previousPage,
+  
     canPreviousPage,
     canNextPage,
     pageOptions,

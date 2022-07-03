@@ -14,6 +14,10 @@ const styles = StyleSheet.create({
     fontStyle: 'bold',
     paddingTop: '20'
   },
+   productImage:{
+    width: 20,
+
+  },
   imageItem:{
     display: 'flex',
     flexDirection: 'row',

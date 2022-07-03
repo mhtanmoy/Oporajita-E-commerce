@@ -36,7 +36,6 @@ function InvoiceV2M({ orders }) {
   return (
     <Document>
       {orders?.map((order, index) => {
-        console.log(orders);
         const {
           paid,
           orderId,
@@ -122,13 +121,16 @@ function InvoiceV2M({ orders }) {
             return (
               <View key={index}>
                 <View style={styles.tableProductListContainer}>
+                <View style={styles.productImage} >
+                      <Image src={item.image}/>
+                    </View>
                   <Text style={styles.productName}>
                     {item.product_image}image {item.name} ({item.variantName}: {item.variantValue}){'\n'}
                     <Text style = {styles.productCode}>
                       SKU : {} /Barcode : {}
                     </Text>
                   </Text>
-                  {console.log("item",item)}
+
                   <Text style={styles.tableData}>
                     {item.addedQuantity} x{' BDT '}
                     {/* {item.unitPrice !== item.price && (
@@ -146,6 +148,17 @@ function InvoiceV2M({ orders }) {
               </View>
             );
           })}
+          
+          <View style={styles.geryTableContainer}>
+            <Text style={styles.tableDataItem} />
+            <Text style={styles.tableData}>Subtotal</Text>
+            <Text style={styles.tableData}>BDT {subtotal}</Text>
+          </View>
+          <View style={styles.tableSummaryContainer}>
+            <Text style={styles.tableDataItem} />
+            <Text style={styles.tableData}>Others Discount</Text>
+            <Text style={styles.tableData}>BDT {discountTotal}</Text>
+          </View>
           <View style={styles.geryTableContainer}>
             <Text style={styles.tableDataItem} />
             <Text style={styles.tableData}>Shipping</Text>
@@ -153,32 +166,28 @@ function InvoiceV2M({ orders }) {
           </View>
           <View style={styles.tableSummaryContainer}>
             <Text style={styles.tableDataItem} />
-            <Text style={styles.tableData}>Subtotal</Text>
-            <Text style={styles.tableData}>BDT {subtotal}</Text>
-          </View>
-          <View style={styles.geryTableContainer}>
-            <Text style={styles.tableDataItem} />
             <Text style={styles.tableData}>Vat / Tax</Text>
             <Text style={styles.tableData}>BDT {taxTotal}</Text>
           </View>
-          <View style={styles.tableSummaryContainer}>
+          <View style={styles.geryTableContainer}>
             <Text style={styles.tableDataItem} />
             <Text style={styles.tableDataBold}>Total</Text>
             <Text style={styles.tableData}>BDT {total}</Text>
+          </View>
+          
+          <View style={styles.tableSummaryContainer}>
+            <Text style={styles.tableDataItem} />
+            <Text style={styles.tableDataBold}>Total Due</Text>
+            {paid > total ? (
+              <Text style={styles.tableDataRed}>BDT {paid - total}</Text>
+            ) : (
+              <Text style={styles.tableDataRed}>BDT {total - paid}</Text>
+            )}
           </View>
           <View style={styles.geryTableContainer}>
             <Text style={styles.tableDataItem} />
             <Text style={styles.tableDataBold}>Total Paid</Text>
             <Text style={styles.tableDataBold}>BDT {paid}</Text>
-          </View>
-          <View style={styles.tableSummaryContainer}>
-            <Text style={styles.tableDataItem} />
-            <Text style={styles.tableDataBold}>Total Due</Text>
-            {paid > total ? (
-              <Text style={styles.tableDataRed}>BDT - {paid - total}</Text>
-            ) : (
-              <Text style={styles.tableDataRed}>BDT {total - paid}</Text>
-            )}
           </View>
           <View style={styles.underline} />
           {paymentDetailsPayment.map((payment, index) => {

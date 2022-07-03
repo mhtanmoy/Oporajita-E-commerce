@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import axiosInstance from '../../../helpers/axios';
-import { errorToast, successToast } from '../../../helpers/toast.js';
 import Progress from '../../../components/loading/Progress.jsx';
 import BulkInventoryEntryTable from '../../../components/table/SpecificPage/Inventory/BulkInventoryEntryTable';
-import { columns, columnOptions } from './demoData';
 import BulkInventoryEntryTableCopy from '../../../components/table/SpecificPage/Inventory/BulkInventoryEntryTable copy';
+import axiosInstance from '../../../helpers/axios';
+import { errorToast } from '../../../helpers/toast.js';
+import { columnOptions, columns } from './demoData';
 
 function BulkInventoryEntryPage() {
   //state

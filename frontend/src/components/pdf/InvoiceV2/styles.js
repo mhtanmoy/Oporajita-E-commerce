@@ -14,6 +14,10 @@ const styles = StyleSheet.create({
     fontStyle: 'bold',
     paddingTop: '20'
   },
+  productImage:{
+    width: 20,
+
+  },
   imageItem:{
     display: 'flex',
     flexDirection: 'row',
@@ -26,6 +30,7 @@ const styles = StyleSheet.create({
     width: 80,
 
   },
+  
   recieptHeaderContainer: {
     display: 'flex',
     flexDirection: 'row',
@@ -113,6 +118,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: '5px 0px',
+
   },
   tableMultupleRow: {
     display: 'flex',
