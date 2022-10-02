@@ -34,3 +34,5 @@ class NotificationAdmin(admin.ModelAdmin):
         'title',
         'created'
     )
+
+admin.site.register(RegisterModel)

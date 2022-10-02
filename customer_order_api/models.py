@@ -356,3 +356,23 @@ class PathaoToken(models.Model):
     id = models.AutoField(primary_key=True)
     access_token = models.TextField(max_length=700, null=True, blank=True)
     refresh_token = models.TextField(max_length=700, null=True, blank=True)
+
+
+class RegisterModel(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=150)
+    # outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE, related_name='register_outlet')
+    opened_at = models.DateTimeField(blank=True, null=True)
+    closed_at = models.DateTimeField(blank=True, null=True)
+    # opened_by = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE, related_name='register_opened_by', blank=True, null=True)
+    # closed_by = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE, related_name='register_closed_by', blank=True, null=True)
+    # cash_management = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
+    status = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    orders = models.ManyToManyField(Order, related_name='register_orders', blank=True, null=True)
+
+    def __str__(self):
+        return self.name

@@ -6,9 +6,10 @@ urlpatterns = [
 
     path('outlets/', views.OutletList.as_view(), name="outlet_list"),
     path('outlet-details/<pk>/', views.OutletDetail.as_view(), name="outlet_details"),
-    path('registers/update/<int:pk>/', views.CloseRegisterList.as_view(), name="register_update_list"),
-    path('registers/', views.RegisterList.as_view(), name="close_reg"),
-    path('register-details/<pk>/', views.RegisterDetail.as_view(), name="outlet_details"),
+    path('registers/create/', views.CreateRegisterModel.as_view(), name="register_create"),
+    path('registers/update/<int:pk>/', views.UpdateRegisterModel.as_view(), name="register_update_list"),
+    path('registers/', views.RegisterModelList.as_view(), name="close_reg"),
+    path('register-details/<pk>/', views.RegisterModelDetail.as_view(), name="outlet_details"),
     
     path('', views.PosOrderList.as_view()),
     path('create/', views.PosOrderCreate.as_view()),

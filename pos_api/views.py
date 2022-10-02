@@ -15,7 +15,7 @@ from rest_framework.permissions import (
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from app_api.models import PromoCode
-from customer_order_api.models import Order
+from customer_order_api.models import Order, RegisterModel
 from customer_order_api.serializers import OrderSerializer
 from customer_profile_api.models import Address
 from inventory_api.models import Product, ProductSizeVariant
@@ -58,70 +58,70 @@ class OutletDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Outlet.objects.all()
 
 
-class RegisterList(generics.ListCreateAPIView):
-    """
-    endpoint for creating register
-    """
-    # permission_classes = (IsAdmin,)
-    serializer_class = RegisterSerializer
-    queryset = Register.objects.filter()
+# class RegisterList(generics.ListCreateAPIView):
+#     """
+#     endpoint for creating register
+#     """
+#     # permission_classes = (IsAdmin,)
+#     serializer_class = RegisterSerializer
+#     queryset = Register.objects.filter()
 
-    def get_queryset(self):
-        queryset = Register.objects.all()
-        return queryset
+#     def get_queryset(self):
+#         queryset = Register.objects.all()
+#         return queryset
 
-    def perform_create(self, serializer):
-        # if self.request.user.is_admin:
-        if self.request.user:
-            try:
-                serializer.save()
-            except:
-                raise ValidationError(
-                    'Failed to add register')
-        else:
-            raise ValidationError(
-                'You do not have access to create register')
+#     def perform_create(self, serializer):
+#         # if self.request.user.is_admin:
+#         if self.request.user:
+#             try:
+#                 serializer.save()
+#             except:
+#                 raise ValidationError(
+#                     'Failed to add register')
+#         else:
+#             raise ValidationError(
+#                 'You do not have access to create register')
 
-class CloseRegisterList(generics.UpdateAPIView):
-    """
-    endpoint for creating register
-    """
-    # permission_classes = (IsAdmin,)
+# class CloseRegisterList(generics.UpdateAPIView):
+#     """
+#     endpoint for creating register
+#     """
+#     # permission_classes = (IsAdmin,)
 
-    queryset = Register.objects.all()
-    serializer_class = RegisterSerializer
-    lookup_field = 'pk'
+#     queryset = Register.objects.all()
+#     serializer_class = RegisterSerializer
+#     lookup_field = 'pk'
 
 
-    def update(self, request, pk):
-        # if self.request.user.is_admin:
+#     def update(self, request, pk):
+#         # if self.request.user.is_admin:
 
 
         
-        if self.request.user:
-            try:  
-                instance = Register.objects.get(id=pk)
-                try:
-                    if self.request.data['close']:
-                        dt = datetime.datetime.now()
-                        now = int(dt.strftime("%Y%m%d%H%M%S"))
-                        instance.closed_at = dt
-                        instance.save()
-                except:
-                    if self.request.data['open']:
-                        dt = datetime.datetime.now()
-                        now = int(dt.strftime("%Y%m%d%H%M%S"))
-                        instance.opened_at = dt
-                        instance.save()
-                serializer = RegisterSerializer(instance)
-                return Response(serializer.data)
-            except Exception as e:
-                print(e)
-                raise ValidationError(
-                    'Failed to close register')
-        else:
-            raise ValidationError(
-                'You do not have access')
+#         if self.request.user:
+#             try:  
+#                 instance = Register.objects.get(id=pk)
+#                 try:
+#                     if self.request.data['close']:
+#                         dt = datetime.datetime.now()
+#                         now = int(dt.strftime("%Y%m%d%H%M%S"))
+#                         instance.closed_at = dt
+#                         instance.save()
+#                 except:
+#                     if self.request.data['open']:
+#                         dt = datetime.datetime.now()
+#                         now = int(dt.strftime("%Y%m%d%H%M%S"))
+#                         instance.opened_at = dt
+#                         instance.save()
+#                 serializer = RegisterSerializer(instance)
+#                 return Response(serializer.data)
+#             except Exception as e:
+#                 print(e)
+#                 raise ValidationError(
+#                     'Failed to close register')
+#         else:
+#             raise ValidationError(
+#                 'You do not have access')
 
 
 class RefundOrderList(generics.UpdateAPIView):
@@ -161,13 +161,13 @@ class RefundOrderList(generics.UpdateAPIView):
 
 
 
-class RegisterDetail(generics.RetrieveUpdateDestroyAPIView):
-    """
-    endpoint for retrieve update delete register
-    """
-    # permission_classes = (IsAuthenticated,)
-    serializer_class = RegisterSerializer
-    queryset = Register.objects.all()
+# class RegisterDetail(generics.RetrieveUpdateDestroyAPIView):
+#     """
+#     endpoint for retrieve update delete register
+#     """
+#     # permission_classes = (IsAuthenticated,)
+#     serializer_class = RegisterSerializer
+#     queryset = Register.objects.all()
 
 class PosOrderList(generics.ListAPIView):
     """
@@ -558,3 +558,88 @@ class POSOrderDetail(APIView):
         else:
             raise ValidationError(
                 'You do not have permissions to update this order')
+
+
+#register
+class CreateRegisterModel(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = RegisterModelSerializer
+
+    def post(self, request, format=None):
+        serializer = RegisterModelSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UpdateRegisterModel(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = RegisterModelSerializer
+
+    def put(self, request, id, format=None):
+        response = {}
+        user = self.request.user
+        query = RegisterModel.objects.get(id=id)
+        if query is not None:
+            serializer = RegisterModelSerializer(
+                query,
+                data=request.data
+            )
+
+            if serializer.is_valid():
+                response['success'] = "Register updated successfully"
+                serializer.save()
+                response['register_details'] = serializer.data
+                return Response(response, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            raise ValidationError(
+                'You do not have permissions to update this register')
+
+class RegisterModelList(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = RegisterModelSerializer
+
+    def get(self, request, format=None):
+        user = self.request.user
+        if user.is_admin or user.is_superuser:
+            queryset = RegisterModel.objects.all()
+            serializer = RegisterModelSerializer(queryset, many=True)
+            return Response(serializer.data)
+        else:
+            raise ValidationError(
+                'You do not have permissions to view this register')
+
+class RegisterModelDetail(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = RegisterModelSerializer
+
+    def get_object(self, id):
+        try:
+            register = RegisterModel.objects.filter(id=id)
+            print("Register is: " + str(register))
+            serializer = RegisterModelSerializer(register, many=True)
+            return serializer
+        except RegisterModel.DoesNotExist:
+            raise Http404
+
+    def get(self, request, id, format=None):
+        user = self.request.user
+        register_obj = RegisterModel.objects.get(id=id)
+        print("is_owner", register_obj)
+        # print(is_owner)
+        if user.is_admin or user.is_superuser:
+            if register_obj is not None:
+                serializer = RegisterModelSerializer(register_obj)
+                return Response(serializer.data)
+            else:
+                return Response({
+                    'status': False,
+                    'status_code': 404,
+                    'detail': 'Register not found',
+                    'register_details': None
+                })
+        else:
+            raise ValidationError(
+                'You do not have permissions to view this register')
